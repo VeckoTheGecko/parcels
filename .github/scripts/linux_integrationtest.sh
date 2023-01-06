@@ -8,4 +8,4 @@ sh -e /etc/init.d/xvfb start;
 sleep 3;
 
 parcels_get_examples examples/;
-pytest -v -s --nbval-lax -k "not documentation" examples/;
+pytest -v -s --nbval-lax -k "not documentation" --cov examples/;
