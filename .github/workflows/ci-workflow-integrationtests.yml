@@ -18,6 +18,10 @@ jobs:
           ./.github/scripts/linux_install.sh
           ./.github/scripts/osx_integrationtest.sh
         shell: bash
+      - name: Codecov
+        uses: codecov/codecov-action@v3.1.1
+        with:
+          flag: ${{ env.OS_NAME }},${{ github.workflow }}
   test_linux:
     name: Integration testing on Linux python latest
     if: github.event.pull_request.draft == false
@@ -33,6 +37,10 @@ jobs:
           ./.github/scripts/linux_install.sh
           ./.github/scripts/linux_integrationtest.sh
         shell: bash
+      - name: Codecov
+        uses: codecov/codecov-action@v3.1.1
+        with:
+          flag: ${{ env.OS_NAME }},${{ github.workflow }}
   test_windows:
     name: Integration testing on Windows python latest
     if: github.event.pull_request.draft == false
@@ -50,3 +58,7 @@ jobs:
           ./.github/scripts/windows_install.bat
           ./.github/scripts/windows_integrationtest.bat
         shell: powershell
+      - name: Codecov
+        uses: codecov/codecov-action@v3.1.1
+        with:
+          flag: ${{ env.OS_NAME }},${{ github.workflow }}

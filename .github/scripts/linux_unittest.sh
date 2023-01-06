@@ -7,4 +7,4 @@ export DISPLAY=:99.0;
 sh -e /etc/init.d/xvfb start;
 sleep 3;
 
-pytest -v -s tests/ ;
+pytest -v -s --cov tests/ ;
