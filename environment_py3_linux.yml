@@ -32,6 +32,9 @@ dependencies:
   - pytest-html
   - coverage
 
+  # Typechecking
+  - mypy
+
   # Linting
   - flake8>=2.1.0
   - flake8-docstrings

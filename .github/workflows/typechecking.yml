@@ -1,0 +1,23 @@
+name: static-typechecking
+on:
+  push:
+
+defaults:
+  run:
+    shell: bash -el {0}
+
+jobs:
+  typechecking:
+    name: Static typechecking with mypy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Miniconda and parcels
+        uses: ./.github/actions/install-parcels
+        with:
+          environment-file: environment_py3_linux.yml
+          environment-name: py3_parcels
+      - name: mypy
+        run: mypy -p parcels
