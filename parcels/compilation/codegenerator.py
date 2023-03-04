@@ -4,6 +4,7 @@ import math
 import random
 from abc import ABC, abstractmethod
 from copy import copy
+from typing import Any, List
 
 import cgen as c
 import numpy as np
@@ -509,7 +510,7 @@ class AbstractKernelGenerator(ABC, ast.NodeVisitor):
 
     # Intrinsic variables that appear as function arguments
     kernel_vars = ['particle', 'fieldset', 'time', 'output_time', 'tol']
-    array_vars = []
+    array_vars: List[Any] = []
 
     def __init__(self, fieldset=None, ptype=JITParticle):
         self.fieldset = fieldset

@@ -1,12 +1,15 @@
 import inspect
 from sys import version_info
+from types import ModuleType
+from typing import Optional
 
+from parcels.kernel.basekernel import BaseKernel
+
+MPI: Optional[ModuleType]
 try:
     from mpi4py import MPI
 except:
     MPI = None
-
-from parcels.kernel.basekernel import BaseKernel
 
 __all__ = ['BaseInteractionKernel']
 

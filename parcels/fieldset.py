@@ -2,6 +2,8 @@ import warnings
 from copy import deepcopy
 from glob import glob
 from os import path
+from types import ModuleType
+from typing import Optional
 
 import dask.array as da
 import numpy as np
@@ -13,6 +15,7 @@ from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import TimeExtrapolationError
 
+MPI: Optional[ModuleType]
 try:
     from mpi4py import MPI
 except:

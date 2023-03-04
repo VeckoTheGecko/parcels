@@ -5,18 +5,13 @@ from hashlib import md5
 from os import path, remove
 from sys import platform, version_info
 from time import time as ostime
+from types import ModuleType
+from typing import Optional
 
 import _ctypes
 import numpy as np
 import numpy.ctypeslib as npct
 from numpy import ndarray
-
-from parcels.tools.loggers import logger
-
-try:
-    from mpi4py import MPI
-except:
-    MPI = None
 
 from parcels.application_kernels.advection import AdvectionAnalytical, AdvectionRK4_3D
 
@@ -32,7 +27,14 @@ from parcels.field import (
 )
 from parcels.grid import GridCode
 from parcels.tools.global_statics import get_cache_dir
+from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import ErrorCode, OperationCode, StateCode
+
+MPI: Optional[ModuleType]
+try:
+    from mpi4py import MPI
+except:
+    MPI = None
 
 __all__ = ['BaseKernel']
 

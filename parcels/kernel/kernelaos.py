@@ -5,13 +5,10 @@ from ast import parse
 from copy import deepcopy
 from ctypes import byref, c_double, c_int
 from os import path
+from types import ModuleType
+from typing import Optional
 
 import numpy as np
-
-try:
-    from mpi4py import MPI
-except:
-    MPI = None
 
 import parcels.rng as ParcelsRandom  # noqa
 from parcels.compilation.codegenerator import ObjectKernelGenerator as KernelGenerator
@@ -21,6 +18,12 @@ from parcels.kernel.basekernel import BaseKernel
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import ErrorCode, OperationCode, StateCode  # noqa
 from parcels.tools.statuscodes import recovery_map as recovery_base_map
+
+MPI: Optional[ModuleType]
+try:
+    from mpi4py import MPI
+except:
+    MPI = None
 
 __all__ = ['KernelAOS']
 

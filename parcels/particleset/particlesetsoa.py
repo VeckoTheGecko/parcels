@@ -2,6 +2,8 @@ import sys
 from copy import copy
 from datetime import date, datetime
 from datetime import timedelta as delta
+from types import ModuleType
+from typing import Optional
 
 import numpy as np
 import xarray as xr
@@ -25,6 +27,7 @@ from parcels.tools.converters import _get_cftime_calendars, convert_to_flat_arra
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import StateCode
 
+MPI: Optional[ModuleType]
 try:
     from mpi4py import MPI
 except:

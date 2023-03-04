@@ -1,19 +1,22 @@
 import math  # noqa
 import random  # noqa
 from collections import defaultdict
+from types import ModuleType
+from typing import Optional
 
 import numpy as np
-
-try:
-    from mpi4py import MPI
-except:
-    MPI = None
 
 import parcels.rng as ParcelsRandom  # noqa
 from parcels.field import NestedField, SummedField, VectorField
 from parcels.interaction.baseinteractionkernel import BaseInteractionKernel
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import ErrorCode, OperationCode, StateCode
+
+MPI: Optional[ModuleType]
+try:
+    from mpi4py import MPI
+except:
+    MPI = None
 
 __all__ = ['InteractionKernelSOA']
 

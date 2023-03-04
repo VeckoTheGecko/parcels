@@ -1,5 +1,7 @@
 from ctypes import c_void_p
 from operator import attrgetter  # NOQA
+from types import ModuleType
+from typing import Optional
 
 import numpy as np
 
@@ -15,6 +17,7 @@ from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import NotTestedError
 
+MPI: Optional[ModuleType]
 try:
     from mpi4py import MPI
 except:

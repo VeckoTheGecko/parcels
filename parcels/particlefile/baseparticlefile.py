@@ -2,6 +2,8 @@
 import os
 from abc import ABC, abstractmethod
 from datetime import timedelta as delta
+from types import ModuleType
+from typing import Optional
 
 import numpy as np
 import xarray as xr
@@ -10,6 +12,7 @@ import zarr
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import OperationCode
 
+MPI: Optional[ModuleType]
 try:
     from mpi4py import MPI
 except:

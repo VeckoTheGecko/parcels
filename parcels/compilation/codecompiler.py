@@ -1,7 +1,10 @@
 import os
 import subprocess
 from struct import calcsize
+from types import ModuleType
+from typing import Optional
 
+MPI: Optional[ModuleType]
 try:
     from mpi4py import MPI
 except:

@@ -1,6 +1,8 @@
 from bisect import bisect_left
 from ctypes import POINTER, Structure
 from operator import attrgetter
+from types import ModuleType
+from typing import Optional
 
 import numpy as np
 
@@ -16,6 +18,7 @@ from parcels.tools.converters import convert_to_flat_array
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import NotTestedError
 
+MPI: Optional[ModuleType]
 try:
     from mpi4py import MPI
 except:

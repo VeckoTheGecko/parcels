@@ -2,6 +2,7 @@
 import inspect
 from datetime import timedelta as delta
 from math import cos, pi
+from typing import Optional, Union
 
 import cftime
 import numpy as np
@@ -137,8 +138,8 @@ class UnitConverter(object):
     """ Interface class for spatial unit conversion during field sampling
         that performs no conversion.
     """
-    source_unit = None
-    target_unit = None
+    source_unit: Optional[str] = None
+    target_unit: Optional[str] = None
 
     def to_target(self, value, x, y, z):
         return value

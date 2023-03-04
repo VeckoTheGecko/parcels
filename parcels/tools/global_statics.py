@@ -2,9 +2,11 @@ import os
 import sys
 from pathlib import Path
 from tempfile import gettempdir
+from typing import Callable, Literal, Union
 
 import _ctypes
 
+getuid: Union[Callable[[], int], Callable[[], Literal["tmp"]]]
 try:
     from os import getuid
 except:

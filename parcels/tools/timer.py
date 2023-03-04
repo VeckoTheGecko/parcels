@@ -2,7 +2,10 @@ from __future__ import print_function
 
 import datetime
 import time
+from types import ModuleType
+from typing import Optional
 
+MPI: Optional[ModuleType]
 try:
     from mpi4py import MPI
 except:
