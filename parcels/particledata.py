@@ -48,10 +48,8 @@ class ParticleData:
         """
         self._ncount = -1
         self._pu_indicators = None
-        self._offset = 0
         self._pclass = None
         self._ptype = None
-        self._latlondepth_dtype = np.float32
         self._data = None
 
         if depth is None:
