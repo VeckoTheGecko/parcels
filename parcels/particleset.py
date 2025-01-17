@@ -99,7 +99,7 @@ class ParticleSet:
         periodic_domain_zonal=None,
         **kwargs,
     ):
-        self.particledata = None
+        self.particledata: ParticleData
         self._repeat_starttime = None
         self._repeatlon = None
         self._repeatlat = None
