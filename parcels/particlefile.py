@@ -15,6 +15,22 @@ from parcels.tools.warnings import FileWarning
 
 __all__ = ["ParticleFile"]
 
+# Create dictionary to translate datatypes and fill_values.
+_FILL_VALUE_MAP = {
+    np.float16: np.nan,
+    np.float32: np.nan,
+    np.float64: np.nan,
+    np.bool_: np.iinfo(np.int8).max,
+    np.int8: np.iinfo(np.int8).max,
+    np.int16: np.iinfo(np.int16).max,
+    np.int32: np.iinfo(np.int32).max,
+    np.int64: np.iinfo(np.int64).max,
+    np.uint8: np.iinfo(np.uint8).max,
+    np.uint16: np.iinfo(np.uint16).max,
+    np.uint32: np.iinfo(np.uint32).max,
+    np.uint64: np.iinfo(np.uint64).max,
+}
+
 
 def _set_calendar(origin_calendar):
     if origin_calendar == "np_datetime64":
@@ -77,21 +93,6 @@ class ParticleFile:
             "parcels_mesh": self._parcels_mesh,
         }
 
-        # Create dictionary to translate datatypes and fill_values
-        self._fill_value_map = {
-            np.float16: np.nan,
-            np.float32: np.nan,
-            np.float64: np.nan,
-            np.bool_: np.iinfo(np.int8).max,
-            np.int8: np.iinfo(np.int8).max,
-            np.int16: np.iinfo(np.int16).max,
-            np.int32: np.iinfo(np.int32).max,
-            np.int64: np.iinfo(np.int64).max,
-            np.uint8: np.iinfo(np.uint8).max,
-            np.uint16: np.iinfo(np.uint16).max,
-            np.uint32: np.iinfo(np.uint32).max,
-            np.uint64: np.iinfo(np.uint64).max,
-        }
         if issubclass(type(name), zarr.storage.Store):
             # If we already got a Zarr store, we won't need any of the naming logic below.
             # But we need to handle incompatibility with MPI mode for now:
@@ -177,7 +178,7 @@ class ParticleFile:
     @property
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
     def fill_value_map(self):
-        return self._fill_value_map
+        return _FILL_VALUE_MAP
 
     @property
     @deprecated_made_private  # TODO: Remove 6 months after v3.1.0
@@ -196,7 +197,7 @@ class ParticleFile:
             "trajectory": {
                 "long_name": "Unique identifier for each particle",
                 "cf_role": "trajectory_id",
-                "_FillValue": self._fill_value_map[np.int64],
+                "_FillValue": _FILL_VALUE_MAP[np.int64],
             },
             "time": {"long_name": "", "standard_name": "time", "units": "seconds", "axis": "T"},
             "lon": {"long_name": "", "standard_name": "longitude", "units": "degrees_east", "axis": "X"},
@@ -210,7 +211,7 @@ class ParticleFile:
         for vname in self.vars_to_write:
             if vname not in ["time", "lat", "lon", "depth", "id"]:
                 attrs[vname] = {
-                    "_FillValue": self._fill_value_map[self.vars_to_write[vname]],
+                    "_FillValue": _FILL_VALUE_MAP[self.vars_to_write[vname]],
                     "long_name": "",
                     "standard_name": vname,
                     "units": "unknown",
@@ -250,16 +251,16 @@ class ParticleFile:
 
     def _extend_zarr_dims(self, Z, store, dtype, axis):
         if axis == 1:
-            a = np.full((Z.shape[0], self.chunks[1]), self._fill_value_map[dtype], dtype=dtype)
+            a = np.full((Z.shape[0], self.chunks[1]), _FILL_VALUE_MAP[dtype], dtype=dtype)
             obs = zarr.group(store=store, overwrite=False)["obs"]
             if len(obs) == Z.shape[1]:
                 obs.append(np.arange(self.chunks[1]) + obs[-1] + 1)
         else:
             extra_trajs = self._maxids - Z.shape[0]
             if len(Z.shape) == 2:
-                a = np.full((extra_trajs, Z.shape[1]), self._fill_value_map[dtype], dtype=dtype)
+                a = np.full((extra_trajs, Z.shape[1]), _FILL_VALUE_MAP[dtype], dtype=dtype)
             else:
-                a = np.full((extra_trajs,), self._fill_value_map[dtype], dtype=dtype)
+                a = np.full((extra_trajs,), _FILL_VALUE_MAP[dtype], dtype=dtype)
         Z.append(a, axis=axis)
         zarr.consolidate_metadata(store)
 
@@ -329,14 +330,14 @@ class ParticleFile:
                         if self._write_once(var):
                             data = np.full(
                                 (arrsize[0],),
-                                self._fill_value_map[self.vars_to_write[var]],
+                                _FILL_VALUE_MAP[self.vars_to_write[var]],
                                 dtype=self.vars_to_write[var],
                             )
                             data[ids_once] = pset.particledata.getvardata(var, indices_to_write_once)
                             dims = ["trajectory"]
                         else:
                             data = np.full(
-                                arrsize, self._fill_value_map[self.vars_to_write[var]], dtype=self.vars_to_write[var]
+                                arrsize, _FILL_VALUE_MAP[self.vars_to_write[var]], dtype=self.vars_to_write[var]
                             )
                             data[ids, 0] = pset.particledata.getvardata(var, indices_to_write)
                             dims = ["trajectory", "obs"]
