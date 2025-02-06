@@ -38,9 +38,29 @@ import parcels
 # In[2]:
 
 
-example_dataset_folder = parcels.download_example_dataset("MovingEddies_data")
+path = parcels.download_example_dataset("MovingEddies_data")
 
-fieldset = parcels.FieldSet.from_parcels(f"{example_dataset_folder}/moving_eddies")
+ds = xr.open_dataset(path)
+
+
+# User manipulations on the ds
+# e.g., rename their U and V variables to match our internal naming conventions
+# - clearly document what those assumptions are
+
+# users have to add a
+# - ds.coords["lon"].attrs["units"] = "degrees"
+# - ds.coords["x"].attrs["units"] = "m"
+
+
+# ? How should we handle grid information (in a separate file)? 
+# - Copy the API from xgcm
+ds_grid = xr.open_dataset("grid.nc") # optional if included in grid file
+grid = parcels.Grid(ds_grid, ...)
+
+# during the Fieldset.__init__() we have a `parcels.assert_compliant_fieldset_dataset(ds)` in the initialisation
+# ! is ds: uxarray.Dataset or ds: xarray.Dataset or ds: xr.Dataset | uxarray.Dataset
+
+fieldset = parcels.FieldSet(ds, interp_methods={"var": "interp_method", "...": "..."})
 
 print(fieldset)
 
@@ -247,6 +267,7 @@ def WestVel(particle, fieldset, time):
         uvel = -2.0
         particle_dlon += uvel * particle.dt
 
+
 # Note that in the Kernel above, we update `particle_dlon`, and not `particle.lon` directly. This is because of the particular way in which particle locations are updated; see also the [tutorial on the particle Kernel loop](https://docs.oceanparcels.org/en/latest/examples/tutorial_kernelloop.html).
 
 # Now reset the `ParticleSet` again, and re-execute. Note that we have now changed the first argument of `pset.execute()` to be a list of `[AdvectionRK4, WestVel]`.
@@ -432,6 +453,7 @@ def SampleP(particle, fieldset, time):
     """Custom function that samples fieldset.P at particle location"""
     particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
 
+
 # Now, execute the `pset` with a combination of the `AdvectionRK4` and `SampleP` kernels.
 #
 
@@ -510,6 +532,7 @@ def TotalDistance(particle, fieldset, time):
     # Set the stored values for next iteration
     particle.prev_lon = particle.lon
     particle.prev_lat = particle.lat
+
 
 # _Note:_ here it is assumed that the latitude and longitude are measured in degrees North and East, respectively. However, some datasets (e.g. the `MovingEddies` used above) give them measured in (kilo)meters, in which case we must _not_ include the factor `1.11e2`.
 #
