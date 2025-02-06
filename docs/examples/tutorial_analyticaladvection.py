@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 
 # # Analytical advection
 #
@@ -139,7 +138,8 @@ print(f"Change in Particle radius {pset.radius[0] - pset.radius_start[0]}")
 
 def doublegyre_fieldset(times, xdim=51, ydim=51):
     """Implemented following Froyland and Padberg (2009)
-    10.1016/j.physd.2009.03.002"""
+    10.1016/j.physd.2009.03.002
+    """
     A = 0.25
     delta = 0.25
     omega = 2 * np.pi
@@ -284,7 +284,8 @@ plt.show()
 
 def bickleyjet_fieldset(times, xdim=51, ydim=51):
     """Bickley Jet Field as implemented in Hadjighasem et al 2017,
-    10.1063/1.4982720"""
+    10.1063/1.4982720
+    """
     U0 = 0.06266
     L = 1770.0
     r0 = 6371.0
@@ -356,6 +357,7 @@ def ZonalBC(particle, fieldset, time):
         particle_dlon += fieldset.halo_east - fieldset.halo_west
     elif particle.lon > fieldset.halo_east:
         particle_dlon -= fieldset.halo_east - fieldset.halo_west
+
 
 # And simulate a set of particles on this fieldset, using the `AdvectionAnalytical` kernel
 #

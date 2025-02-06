@@ -29,27 +29,31 @@ def interp_method_1D_NN(da, lon=None, lat=None):
 def interp_method_1D_lin(da, lon=None, lat=None):
     return da.interp(lon=lon, lat=lat)
 
-def unit_conversion():
-    ...
+
+def unit_conversion(): ...
+
 
 class Field:
-    def __init__(self, da=None, #! grid??
-                 interp_method=None):
+    def __init__(
+        self,
+        da=None,  #! grid??
+        interp_method=None,
+    ):
         self.da = da
         self.interp_method = interp_method
-    
+
     def eval(self, *, lon=None, lat=None, target_unit="m/s"):
         return unit_conversion(
             self.interp_method(self.U.da, lon=lon, lat=lat),
             self.da.units,
             target_unit,
         )
-    
+
+
 class Fieldset:
     def __init__(self, fields: list[Field]):
         self.fields = fields
-    
-    
+
     def __getattr__(self, attr):
         return self.fields[attr]
 
@@ -57,7 +61,7 @@ class Fieldset:
 fieldset = Fieldset(
     U=Field(U, interp_method_nD),
     V=Field(V, interp_method_1D_NN),
-    )
+)
 
 lon_poi = 30
 lat_poi = 12

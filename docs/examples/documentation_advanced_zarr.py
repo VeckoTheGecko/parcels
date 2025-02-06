@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 
 # # Output in zarr (advanced)
 #
@@ -60,7 +59,7 @@ display(ds_flow_field)
     ds_flow_field.isel(lon=slice(None, None, 3), lat=slice(None, None, 3)).plot.quiver(
         x="lon", y="lat", u="U", v="V"
     )
-);
+)
 
 # ## The Parcels experiment
 #
@@ -68,7 +67,7 @@ display(ds_flow_field)
 # In[4]:
 
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import numpy as np
 import zarr
@@ -135,7 +134,7 @@ ds_out = xr.open_zarr(output_memorystore)
 display(ds_out)
 
 # have a look
-ds_out.to_dataframe().plot.scatter(x="lon", y="lat", s=2, alpha=0.1);
+ds_out.to_dataframe().plot.scatter(x="lon", y="lat", s=2, alpha=0.1)
 
 # ## Saving to an other Zarr store
 #
@@ -158,7 +157,7 @@ output_dirstore.close()
 # have a quick look
 ds_out = xr.open_zarr(output_dirstore_name)
 display(ds_out)
-ds_out.to_dataframe().plot.scatter(x="lon", y="lat", s=2, alpha=0.1);
+ds_out.to_dataframe().plot.scatter(x="lon", y="lat", s=2, alpha=0.1)
 
 # ### Zipfile, without changing chunking
 #
@@ -178,7 +177,7 @@ output_zipstore.close()
 # have a quick look
 ds_out = xr.open_zarr(output_zipstore_name)
 display(ds_out)
-ds_out.to_dataframe().plot.scatter(x="lon", y="lat", s=2, alpha=0.1);
+ds_out.to_dataframe().plot.scatter(x="lon", y="lat", s=2, alpha=0.1)
 
 # ### Rechunking and saving to new stores
 #
@@ -223,4 +222,4 @@ ds_out_rechunked.to_zarr("zarr_advanced_01_rechunked.zarr/", mode="w")
 # new directory store
 ds_out_rechunked.to_zarr(
     zarr.storage.ZipStore("zarr_advanced_01_rechunked.zip", mode="w")
-);  # new zip store
+)  # new zip store

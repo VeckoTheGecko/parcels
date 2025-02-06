@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 
 # # Parallelisation with MPI and Field chunking with dask
 #
@@ -39,6 +38,7 @@ def simple_partition_function(coords, mpi_size=1):
     that assigns particles to processors
     """
     return np.linspace(0, mpi_size, coords.shape[0], endpoint=False, dtype=np.int32)
+
 
 # To add the partition function to your script, you need to add it to the ParticleSet constructor:
 

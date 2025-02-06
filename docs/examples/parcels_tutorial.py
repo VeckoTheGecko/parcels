@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 
 # # Quickstart to Parcels
 #
@@ -22,7 +21,6 @@ from operator import attrgetter
 
 import matplotlib.pyplot as plt
 import numpy as np
-import trajan as ta
 import xarray as xr
 from IPython.display import HTML
 from matplotlib.animation import FuncAnimation
@@ -52,9 +50,9 @@ ds = xr.open_dataset(path)
 # - ds.coords["x"].attrs["units"] = "m"
 
 
-# ? How should we handle grid information (in a separate file)? 
+# ? How should we handle grid information (in a separate file)?
 # - Copy the API from xgcm
-ds_grid = xr.open_dataset("grid.nc") # optional if included in grid file
+ds_grid = xr.open_dataset("grid.nc")  # optional if included in grid file
 grid = parcels.Grid(ds_grid, ...)
 
 # during the Fieldset.__init__() we have a `parcels.assert_compliant_fieldset_dataset(ds)` in the initialisation
@@ -519,7 +517,8 @@ DistParticle = parcels.JITParticle.add_variables(extra_vars)
 
 def TotalDistance(particle, fieldset, time):
     """Calculate the distance in latitudinal direction
-    (using 1.11e2 kilometer per degree latitude)"""
+    (using 1.11e2 kilometer per degree latitude)
+    """
     lat_dist = (particle.lat - particle.prev_lat) * 1.11e2
     lon_dist = (
         (particle.lon - particle.prev_lon)

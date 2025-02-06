@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 
 # # The homepage animation
 
@@ -7,18 +6,14 @@
 
 
 # %matplotlib qt
-import copy
 
 import cartopy
 import cartopy.crs as ccrs
 import matplotlib.animation as animation
 import matplotlib.gridspec as gridspec
-import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
-from matplotlib import colors
-from matplotlib.animation import FuncAnimation, PillowWriter, writers
 
 # Load in particle data, define the time range at which to plot (**`plottimes`**) and select the indices of the first timestep in the variable `'b'`.
 #
