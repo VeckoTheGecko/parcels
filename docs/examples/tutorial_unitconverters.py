@@ -83,7 +83,7 @@ print(v * 1852 * 60)
 # In[7]:
 
 
-print(fieldset.UV.eval(0, 0, 40, -5, applyConversion=False))
+print(fieldset.UV.eval(0, 0, 40, -5, target_units="m/s"))
 
 # ## UnitConverters for `mesh='flat'`
 #
