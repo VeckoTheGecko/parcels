@@ -67,9 +67,7 @@ class ParticleFile:
         self._outputdt = timedelta_to_float(outputdt)
         self._chunks = chunks
         self._particleset = particleset
-        self._parcels_mesh = "spherical"
-        if self.particleset.fieldset is not None:
-            self._parcels_mesh = self.particleset.fieldset.gridset[0].mesh
+
         self.lonlatdepth_dtype = self.particleset.particledata.lonlatdepth_dtype
         self._maxids = 0
         self._pids_written = {}
@@ -89,8 +87,12 @@ class ParticleFile:
             "Conventions": "CF-1.6/CF-1.7",
             "ncei_template_version": "NCEI_NetCDF_Trajectory_Template_v2.0",
             "parcels_version": parcels.__version__,
-            "parcels_mesh": self._parcels_mesh,
         }
+
+        if self.particleset.fieldset is not None:
+            self.metadata["parcels_mesh"] = self.particleset.fieldset.gridset[0].mesh
+        else:
+            self.metadata["parcels_mesh"] = "spherical"
 
         if issubclass(type(name), zarr.storage.Store):
             # If we already got a Zarr store, we won't need any of the naming logic below.
