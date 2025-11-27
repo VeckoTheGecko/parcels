@@ -22,6 +22,7 @@ classifiers = [
 dependencies = [
   "cftime >=1.6.3",
   "numpy >=2.1.0",
+  "array-api-compat",
   "dask >=2024.5.1",
   "netCDF4 >=1.7.2",
   "zarr >=2.15.0,!=2.18.0,<3",

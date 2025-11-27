@@ -30,6 +30,7 @@ pre-commit = { features = ["pre-commit"], no-default-feature = true }
 python = ">=3.11"
 netcdf4 = ">=1.7.2"
 numpy = ">=2.1.0"
+array-api-compat = "*"
 tqdm = ">=4.50.0"
 xarray = ">=2024.5.0"
 uxarray = ">=2025.3.0"
