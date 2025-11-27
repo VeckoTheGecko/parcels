@@ -7,6 +7,18 @@ import xarray as xr
 _SUPPORTED_ATTR_TYPES = int | float | str | np.ndarray
 
 
+def to_strict_array_api(ds: xr.Dataset) -> xr.Dataset:
+    """Updates the data_var arrays used in a dataset to use the strict array API.
+
+    Ensures when the dataset is used during testing that no non-strict array API features are used.
+    """
+    import array_api_strict as xp
+
+    for var in ds.data_vars:
+        ds[var].data = xp.asarray(ds[var].data)
+    return ds
+
+
 def _print_mismatched_keys(d1: dict[Any, Any], d2: dict[Any, Any]) -> None:
     k1 = set(d1.keys())
     k2 = set(d2.keys())

@@ -1,7 +1,11 @@
+import numpy as np
+import pytest
+import xarray as xr
 import xgcm
 
 from parcels._core.xgrid import _DEFAULT_XGCM_KWARGS
 from parcels._datasets.structured.generic import datasets
+from parcels._datasets.utils import to_strict_array_api
 
 
 def test_left_indexed_dataset():
@@ -21,3 +25,18 @@ def test_right_indexed_dataset():
     for _axis_name, axis in grid.axes.items():
         for pos, _dim_name in axis.coords.items():
             assert pos in ["center", "right"]
+
+
+@pytest.mark.parametrize(
+    "ds",
+    [
+        xr.Dataset({"var": (("x", "y"), np.arange(20).reshape(4, 5))}),
+    ],
+)
+def test_to_strict_array_api(ds):
+    """Updates the arrays used in a dataset to use the strict array API.
+
+    Ensures when the dataset is used during testing that no non-strict array API features are used.
+    """
+    ds_new = to_strict_array_api(ds)
+    print(ds_new)

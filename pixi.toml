@@ -66,7 +66,7 @@ python = "3.13.*"
 
 [feature.test.dependencies]
 nbval = "*"
-array-api-strict = "*"
+array-api-strict = "<2.4" # TODO: Remove upper pin once xarray supports >2.4
 pytest = "*"
 hypothesis = "*"
 pytest-html = "*"
