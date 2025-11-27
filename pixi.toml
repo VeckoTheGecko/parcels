@@ -66,6 +66,7 @@ python = "3.13.*"
 
 [feature.test.dependencies]
 nbval = "*"
+array-api-strict = "*"
 pytest = "*"
 hypothesis = "*"
 pytest-html = "*"
