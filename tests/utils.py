@@ -139,6 +139,28 @@ def assert_valid_field_data(data: xr.DataArray, grid: XGrid):
         assert ax_actual == ax_expected, f"Expected axis {ax_expected} for dimension '{dim}', got {ax_actual}"
 
 
+def assert_backed_by_strict_array(obj: xr.Dataset | xr.DataArray):
+    """Asserts that the array backend used in the dataset or data array is a strict array."""
+    from array_api_strict._array_object import Array
+
+    __tracebackhide__ = True
+    _assert_array_backend(obj, Array)
+
+
+def _assert_array_backend(obj: xr.Dataset | xr.DataArray, backend_type: type):
+    """Asserts that the array backend used in the dataset or data array is of the given type."""
+    __tracebackhide__ = True
+    if isinstance(obj, xr.Dataset):
+        for var in obj.data_vars:
+            assert isinstance(obj[var].data, backend_type), (
+                f"Variable {var!r} data is of type {type(obj[var].data)} not of type {backend_type}"
+            )
+    elif isinstance(obj, xr.DataArray):
+        assert isinstance(obj.data, backend_type), f"DataArray is of type {type(obj.data)} not of type {backend_type}"
+    else:
+        raise TypeError(f"Unsupported type {type(obj)}")
+
+
 def round_and_hash_float_array(arr, decimals=6):
     arr = np.round(arr, decimals=decimals)
 

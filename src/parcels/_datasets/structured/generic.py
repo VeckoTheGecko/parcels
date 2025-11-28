@@ -225,3 +225,4 @@ datasets = {
     ),
     "2d_left_unrolled_cone": _unrolled_cone_curvilinear_grid(),
 }
+# datasets = {k: to_strict_array(v) for k, v in datasets.items()} # TODO: Enable once we have better support for array-api in testing

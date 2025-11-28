@@ -7,16 +7,23 @@ import xarray as xr
 _SUPPORTED_ATTR_TYPES = int | float | str | np.ndarray
 
 
-def to_strict_array_api(ds: xr.Dataset) -> xr.Dataset:
-    """Updates the data_var arrays used in a dataset to use the strict array API.
+def to_strict_array(obj: xr.DataArray | xr.Dataset) -> xr.DataArray | xr.Dataset:
+    """Updates the xarray object (DataArray or Dataset) to be backed by strict arrays.
 
-    Ensures when the dataset is used during testing that no non-strict array API features are used.
+    Ensures when the object is used during testing that no non-strict array API features are used.
     """
     import array_api_strict as xp
 
-    for var in ds.data_vars:
-        ds[var].data = xp.asarray(ds[var].data)
-    return ds
+    if isinstance(obj, xr.DataArray):
+        obj.data = xp.asarray(obj.data)
+        return obj
+    elif isinstance(obj, xr.Dataset):
+        ds = obj
+        for var in ds.data_vars:
+            ds[var].data = xp.asarray(ds[var].data)
+        return ds
+    else:
+        raise TypeError(f"Expected xr.DataArray or xr.Dataset, got {type(obj)}")
 
 
 def _print_mismatched_keys(d1: dict[Any, Any], d2: dict[Any, Any]) -> None:

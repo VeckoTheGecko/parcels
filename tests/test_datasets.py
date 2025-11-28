@@ -5,7 +5,8 @@ import xgcm
 
 from parcels._core.xgrid import _DEFAULT_XGCM_KWARGS
 from parcels._datasets.structured.generic import datasets
-from parcels._datasets.utils import to_strict_array_api
+from parcels._datasets.utils import to_strict_array
+from tests.utils import assert_backed_by_strict_array
 
 
 def test_left_indexed_dataset():
@@ -38,5 +39,6 @@ def test_to_strict_array_api(ds):
 
     Ensures when the dataset is used during testing that no non-strict array API features are used.
     """
-    ds_new = to_strict_array_api(ds)
-    print(ds_new)
+    ds = to_strict_array(ds)
+    xr.testing.assert_equal(ds, ds)
+    assert_backed_by_strict_array(ds)
