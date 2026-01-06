@@ -1,0 +1,30 @@
+---
+$schema: https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json
+version: '0.2'
+languageId: en-GB
+words:
+    - setuptools
+    - petascale
+    - cftime
+    - numpy
+    - dask
+    - zarr
+    - tqdm
+    - pytest
+    - xarray
+    - uxarray
+    - xgcm
+    - xarray
+    - setuptools
+    - parcels
+dictionaries:
+    - python
+    - python-common
+ignorePaths:
+    - 'docs'
+    - 'tests'
+    - 'pixi.toml'
+    - 'CITATION.cff'
+    - 'tests-v3' # TODO: Remove when tests-v3 is removed
+useGitignore: true
+
