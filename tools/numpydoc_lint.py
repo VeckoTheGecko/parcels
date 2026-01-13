@@ -1,10 +1,12 @@
 #!/usr/bin/env python
+import functools
 import importlib
 import sys
-from pprint import pprint
 from types import ModuleType
 
 from numpydoc.validate import validate
+
+PUBLIC_MODULES = ["parcels", "parcels.interpolators"]
 
 skip_errors = [
     "GL01",
@@ -39,7 +41,13 @@ skip_errors = [
     "SA04",
     "EX01",  # remove when gh-7168 is resolved
 ]
-encountered_types = set()
+
+
+def is_built_in(type_or_instance: type | object):
+    if isinstance(type_or_instance, type):
+        return type_or_instance.__module__ == "builtins"
+    else:
+        return type_or_instance.__class__.__module__ == "builtins"
 
 
 def walk_module(module_str: str, public_api: list[str] | None = None) -> list[str]:
@@ -54,25 +62,38 @@ def walk_module(module_str: str, public_api: list[str] | None = None) -> list[st
         return public_api
 
     if module_str not in public_api:
-        public_api.append(module_str)
+        try:
+            _ = module.__doc__
+            public_api.append(module_str)
+        except AttributeError:
+            pass  # module has no docstring
     for item_str in all_:
         item = getattr(module, item_str)
-        encountered_types.add(type(item))
         if isinstance(item, ModuleType):
             walk_module(f"{module_str}.{item_str}", public_api)
+        elif is_built_in(item):
+            continue
         elif isinstance(item, type):
             public_api.append(f"{module_str}.{item_str}")
             walk_class(module_str, item, public_api)
-            # ... # Handle a custom type
         else:
-            public_api.append(f"{module_str}.{item_str}")
+            print(f"Encountered unexpected type at '{module_str}.{item_str}' of {type(item)} in public API. Ignoring.")
 
     return public_api
 
 
+def get_public_class_attrs(class_: type) -> set[str]:
+    return {a for a in dir(class_) if not a.startswith("_")}
+
+
 def walk_class(module_str: str, class_: type, public_api: list[str]) -> list[str]:
     class_str = class_.__name__
-    attrs = [a for a in dir(class_) if not a.startswith("_")]
+
+    # attributes that were introduced by this class specifically - not from inheritance
+    attrs = get_public_class_attrs(class_) - functools.reduce(
+        set.add, (get_public_class_attrs(base) for base in class_.__bases__)
+    )
+
     for attr_str in attrs:
         attr = getattr(class_, attr_str)
         try:
@@ -84,12 +105,13 @@ def walk_class(module_str: str, class_: type, public_api: list[str]) -> list[str
 
 
 def main():
-    # load in numpydoc config
-    pprint(walk_module("parcels"))
-    pprint(encountered_types)
-    return
+    public_api = []
+    for module in PUBLIC_MODULES:
+        public_api += walk_module(module)
+
+    public_api = filter(lambda x: x != "parcels", public_api)  # For some reason doesn't work on root parcels package?
     errors = 0
-    for item in to_check:
+    for item in public_api:
         try:
             res = validate(item)
         except AttributeError:
