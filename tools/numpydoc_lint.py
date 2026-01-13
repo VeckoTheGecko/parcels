@@ -2,7 +2,7 @@
 import functools
 import importlib
 import sys
-from types import ModuleType
+import types
 
 from numpydoc.validate import validate
 
@@ -69,15 +69,20 @@ def walk_module(module_str: str, public_api: list[str] | None = None) -> list[st
             pass  # module has no docstring
     for item_str in all_:
         item = getattr(module, item_str)
-        if isinstance(item, ModuleType):
+        if isinstance(item, types.ModuleType):
             walk_module(f"{module_str}.{item_str}", public_api)
+        if isinstance(item, (types.FunctionType,)):
+            public_api.append(f"{module_str}.{item_str}")
         elif is_built_in(item):
+            print(f"Found builtin at '{module_str}.{item_str}' of type {type(item)}")
             continue
         elif isinstance(item, type):
             public_api.append(f"{module_str}.{item_str}")
             walk_class(module_str, item, public_api)
         else:
-            print(f"Encountered unexpected type at '{module_str}.{item_str}' of {type(item)} in public API. Ignoring.")
+            print(
+                f"Encountered unexpected public object at '{module_str}.{item_str}' of {item!r} in public API. Don't know how to handle with numpydoc - ignoring."
+            )
 
     return public_api
 
