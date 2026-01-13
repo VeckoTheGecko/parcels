@@ -7,6 +7,7 @@ import types
 from numpydoc.validate import validate
 
 PUBLIC_MODULES = ["parcels", "parcels.interpolators"]
+ROOT_PACKAGE = "parcels"
 
 skip_errors = [
     "GL01",
@@ -62,11 +63,7 @@ def walk_module(module_str: str, public_api: list[str] | None = None) -> list[st
         return public_api
 
     if module_str not in public_api:
-        try:
-            _ = module.__doc__
-            public_api.append(module_str)
-        except AttributeError:
-            pass  # module has no docstring
+        public_api.append(module_str)
     for item_str in all_:
         item = getattr(module, item_str)
         if isinstance(item, types.ModuleType):
@@ -99,13 +96,7 @@ def walk_class(module_str: str, class_: type, public_api: list[str]) -> list[str
         set.add, (get_public_class_attrs(base) for base in class_.__bases__)
     )
 
-    for attr_str in attrs:
-        attr = getattr(class_, attr_str)
-        try:
-            _ = attr.__doc__
-            public_api.append(f"{module_str}.{class_str}.{attr_str}")
-        except AttributeError:
-            pass  # attribute doesn't have a docstring
+    public_api.extend([f"{module_str}.{class_str}.{attr_str}" for attr_str in attrs])
     return public_api
 
 
@@ -114,7 +105,7 @@ def main():
     for module in PUBLIC_MODULES:
         public_api += walk_module(module)
 
-    public_api = filter(lambda x: x != "parcels", public_api)  # For some reason doesn't work on root parcels package?
+    public_api = filter(lambda x: x != ROOT_PACKAGE, public_api)  # For some reason doesn't work on root package
     errors = 0
     for item in public_api:
         try:
