@@ -84,6 +84,7 @@ pydata-sphinx-theme = "*"
 sphinx-autobuild = "*"
 sphinxcontrib-mermaid = "*"
 sphinx-design = "*"
+scipy = '*'
 sphinx-autoapi = "*"
 
 [feature.docs.tasks]
