@@ -34,6 +34,7 @@ def simple_UV_dataset(dims=(360, 2, 30, 4), maxdepth=1, mesh="spherical"):
             cf_role="grid_topology",
             topology_dimension=2,
             node_dimensions=("XG", "YG"),
+            node_coordinates=("lon", "lat"),
             face_dimensions=(
                 DimDimPadding("XC", "XG", Padding.LOW),
                 DimDimPadding("YC", "YG", Padding.LOW),
