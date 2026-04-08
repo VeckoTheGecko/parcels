@@ -185,7 +185,9 @@ class ParticleFile:
         once_ids = np.where(particle_data["obs_written"][indices_to_write] == 0)[0]
         ids_once = ids[once_ids]
         indices_once = indices_to_write[once_ids]
-        obs_indices = particle_data["obs_written"][indices_to_write]
+        obs_indices = particle_data["obs_written"][
+            indices_to_write
+        ]  # always 0 on initial write; updated by caller after both branches
 
         if not self._initialized:
             self._initial_write(
@@ -256,6 +258,7 @@ class ParticleFile:
     def _append_write(
         self, *, ids, obs_indices, ids_once, indices_once, indices_to_write, vars_to_write, particle_data
     ):
+        # obs_indices is a snapshot from the caller; caller updates obs_written after this returns
         Z = zarr.group(store=self.store, overwrite=False)
         for var in vars_to_write:
             if len(self._pids_written) > Z[var.name].shape[0]:
