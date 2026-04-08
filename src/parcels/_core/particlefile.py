@@ -204,7 +204,7 @@ class ParticleFile:
                 attrs=self.metadata,
                 coords={"trajectory": ("trajectory", pids), "obs": ("obs", np.arange(arrsize[1], dtype=np.int32))},
             )
-            attrs = _create_variables_attribute_dict(pclass, time_interval)
+            attrs = _create_variables_attribute_dict(vars_to_write, time_interval)
             obs = np.zeros((len(self._pids_written),), dtype=np.int32)
             for var in vars_to_write:
                 if var.name not in ["trajectory"]:  # because 'trajectory' is written as coordinate
@@ -254,7 +254,7 @@ def _get_vars_to_write(particle: ParticleClass) -> list[Variable]:
     return [v for v in particle.variables if v.to_write is not False]
 
 
-def _create_variables_attribute_dict(particle: ParticleClass, time_interval: TimeInterval) -> dict:
+def _create_variables_attribute_dict(vars_to_write: list[Variable], time_interval: TimeInterval) -> dict:
     """Creates the dictionary with variable attributes.
 
     Notes
@@ -263,10 +263,8 @@ def _create_variables_attribute_dict(particle: ParticleClass, time_interval: Tim
     """
     attrs = {}
 
-    vars = [var for var in particle.variables if var.to_write is not False]
-    for var in vars:
+    for var in vars_to_write:
         fill_value = {"_FillValue": _DATATYPES_TO_FILL_VALUES[var.dtype]}
-
         attrs[var.name] = {**var.attrs, **fill_value}
 
     attrs["time"].update(_get_calendar_and_units(time_interval))
