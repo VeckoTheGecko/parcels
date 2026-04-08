@@ -125,19 +125,21 @@ class ParticleFile:
     def create_new_zarrfile(self):
         return not self._initialized
 
-    def _extend_zarr_dims(self, Z, dtype, axis):  # noqa: N803
-        if axis == 1:
-            a = np.full((Z.shape[0], self.chunks[1]), _DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
-            obs = zarr.group(store=self.store, overwrite=False)["obs"]
-            if len(obs) == Z.shape[1]:
-                obs.append(np.arange(self.chunks[1]) + obs[-1] + 1)
+    def _extend_trajectories(self, Z, dtype):  # noqa: N803
+        extra_trajs = len(self._pids_written) - Z.shape[0]
+        if len(Z.shape) == 2:
+            a = np.full((extra_trajs, Z.shape[1]), _DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
         else:
-            extra_trajs = len(self._pids_written) - Z.shape[0]
-            if len(Z.shape) == 2:
-                a = np.full((extra_trajs, Z.shape[1]), _DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
-            else:
-                a = np.full((extra_trajs,), _DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
-        Z.append(a, axis=axis)
+            a = np.full((extra_trajs,), _DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
+        Z.append(a, axis=0)
+        zarr.consolidate_metadata(self.store)
+
+    def _extend_observations(self, Z, dtype):  # noqa: N803
+        a = np.full((Z.shape[0], self.chunks[1]), _DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
+        obs = zarr.group(store=self.store, overwrite=False)["obs"]
+        if len(obs) == Z.shape[1]:
+            obs.append(np.arange(self.chunks[1]) + obs[-1] + 1)
+        Z.append(a, axis=1)
         zarr.consolidate_metadata(self.store)
 
     def write(self, pset: ParticleSet, time, indices=None):
@@ -229,13 +231,13 @@ class ParticleFile:
             obs = particle_data["obs_written"][indices_to_write]
             for var in vars_to_write:
                 if len(self._pids_written) > Z[var.name].shape[0]:
-                    self._extend_zarr_dims(Z[var.name], dtype=var.dtype, axis=0)
+                    self._extend_trajectories(Z[var.name], dtype=var.dtype)
                 if var.to_write == "once":
                     if len(once_ids) > 0:
                         Z[var.name].vindex[ids_once] = particle_data[var.name][indices_to_write_once]
                 else:
                     if max(obs) >= Z[var.name].shape[1]:
-                        self._extend_zarr_dims(Z[var.name], dtype=var.dtype, axis=1)
+                        self._extend_observations(Z[var.name], dtype=var.dtype)
                     Z[var.name].vindex[ids, obs] = particle_data[var.name][indices_to_write]
 
         particle_data["obs_written"][indices_to_write] = obs + 1
