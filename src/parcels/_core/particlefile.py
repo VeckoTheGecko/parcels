@@ -126,10 +126,10 @@ class ParticleFile:
     def create_new_zarrfile(self):
         return self._create_new_zarrfile
 
-    def _extend_zarr_dims(self, Z, store, dtype, axis):  # noqa: N803
+    def _extend_zarr_dims(self, Z, dtype, axis):  # noqa: N803
         if axis == 1:
             a = np.full((Z.shape[0], self.chunks[1]), _DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
-            obs = zarr.group(store=store, overwrite=False)["obs"]
+            obs = zarr.group(store=self.store, overwrite=False)["obs"]
             if len(obs) == Z.shape[1]:
                 obs.append(np.arange(self.chunks[1]) + obs[-1] + 1)
         else:
@@ -139,7 +139,7 @@ class ParticleFile:
             else:
                 a = np.full((extra_trajs,), _DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
         Z.append(a, axis=axis)
-        zarr.consolidate_metadata(store)
+        zarr.consolidate_metadata(self.store)
 
     def write(self, pset: ParticleSet, time, indices=None):
         """Write all data from one time step to the zarr file,
@@ -229,13 +229,13 @@ class ParticleFile:
             obs = particle_data["obs_written"][indices_to_write]
             for var in vars_to_write:
                 if self._maxids > Z[var.name].shape[0]:
-                    self._extend_zarr_dims(Z[var.name], store, dtype=var.dtype, axis=0)
+                    self._extend_zarr_dims(Z[var.name], dtype=var.dtype, axis=0)
                 if var.to_write == "once":
                     if len(once_ids) > 0:
                         Z[var.name].vindex[ids_once] = particle_data[var.name][indices_to_write_once]
                 else:
                     if max(obs) >= Z[var.name].shape[1]:
-                        self._extend_zarr_dims(Z[var.name], store, dtype=var.dtype, axis=1)
+                        self._extend_zarr_dims(Z[var.name], dtype=var.dtype, axis=1)
                     Z[var.name].vindex[ids, obs] = particle_data[var.name][indices_to_write]
 
         particle_data["obs_written"][indices_to_write] = obs + 1
