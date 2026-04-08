@@ -162,17 +162,11 @@ class ParticleFile:
         )
 
     def _write_particle_data(self, *, particle_data, pclass, time_interval, time, indices=None):
-        # if pset._data._ncount == 0:
-        #     warnings.warn(
-        #         f"ParticleSet is empty on writing as array at time {time:g}",
-        #         RuntimeWarning,
-        #         stacklevel=2,
-        #     )
-        #     return
         if isinstance(time, (np.timedelta64, np.datetime64)):
             time = timedelta_to_float(time - time_interval.left)
         nparticles = len(particle_data["trajectory"])
         vars_to_write = _get_vars_to_write(pclass)
+
         if indices is None:
             indices_to_write = _to_write_particles(particle_data, time)
         else:
@@ -182,65 +176,97 @@ class ParticleFile:
             return
 
         pids = particle_data["trajectory"][indices_to_write]
-        to_add = sorted(set(pids) - set(self._pids_written.keys()))
         start = len(self._pids_written)
+        to_add = sorted(set(pids) - set(self._pids_written.keys()))
         for i, pid in enumerate(to_add):
             self._pids_written[pid] = start + i
         ids = np.array([self._pids_written[p] for p in pids], dtype=int)
 
         once_ids = np.where(particle_data["obs_written"][indices_to_write] == 0)[0]
-        if len(once_ids) > 0:
-            ids_once = ids[once_ids]
-            indices_to_write_once = indices_to_write[once_ids]
+        ids_once = ids[once_ids]
+        indices_once = indices_to_write[once_ids]
+        obs_indices = particle_data["obs_written"][indices_to_write]
 
-        store = self.store
-        if self.create_new_zarrfile:
-            if self.chunks is None:
-                self._chunks = (nparticles, 1)
-            n_unique = len(self._pids_written)
-            if (n_unique > len(ids)) or (n_unique > self.chunks[0]):
-                arrsize = (n_unique, self.chunks[1])
-            else:
-                arrsize = (len(ids), self.chunks[1])
-            ds = xr.Dataset(
-                attrs=self.metadata,
-                coords={"trajectory": ("trajectory", pids), "obs": ("obs", np.arange(arrsize[1], dtype=np.int32))},
+        if not self._initialized:
+            self._initial_write(
+                ids=ids,
+                ids_once=ids_once,
+                indices_to_write=indices_to_write,
+                indices_once=indices_once,
+                vars_to_write=vars_to_write,
+                pids=pids,
+                nparticles=nparticles,
+                particle_data=particle_data,
+                time_interval=time_interval,
             )
-            attrs = _create_variables_attribute_dict(vars_to_write, time_interval)
-            obs = np.zeros((len(self._pids_written),), dtype=np.int32)
-            for var in vars_to_write:
-                if var.name not in ["trajectory"]:  # because 'trajectory' is written as coordinate
-                    if var.to_write == "once":
-                        data = np.full(
-                            (arrsize[0],),
-                            _DATATYPES_TO_FILL_VALUES[var.dtype],
-                            dtype=var.dtype,
-                        )
-                        data[ids_once] = particle_data[var.name][indices_to_write_once]
-                        dims = ["trajectory"]
-                    else:
-                        data = np.full(arrsize, _DATATYPES_TO_FILL_VALUES[var.dtype], dtype=var.dtype)
-                        data[ids, 0] = particle_data[var.name][indices_to_write]
-                        dims = ["trajectory", "obs"]
-                    ds[var.name] = xr.DataArray(data=data, dims=dims, attrs=attrs[var.name])
-                    ds[var.name].encoding["chunks"] = self.chunks[0] if var.to_write == "once" else self.chunks
-            ds.to_zarr(store, mode="w")
-            self._initialized = True
         else:
-            Z = zarr.group(store=store, overwrite=False)
-            obs = particle_data["obs_written"][indices_to_write]
-            for var in vars_to_write:
-                if len(self._pids_written) > Z[var.name].shape[0]:
-                    self._extend_trajectories(Z[var.name], dtype=var.dtype)
-                if var.to_write == "once":
-                    if len(once_ids) > 0:
-                        Z[var.name].vindex[ids_once] = particle_data[var.name][indices_to_write_once]
-                else:
-                    if max(obs) >= Z[var.name].shape[1]:
-                        self._extend_observations(Z[var.name], dtype=var.dtype)
-                    Z[var.name].vindex[ids, obs] = particle_data[var.name][indices_to_write]
+            self._append_write(
+                ids=ids,
+                obs_indices=obs_indices,
+                ids_once=ids_once,
+                indices_once=indices_once,
+                indices_to_write=indices_to_write,
+                vars_to_write=vars_to_write,
+                particle_data=particle_data,
+            )
 
-        particle_data["obs_written"][indices_to_write] = obs + 1
+        particle_data["obs_written"][indices_to_write] = obs_indices + 1
+
+    def _initial_write(
+        self,
+        *,
+        ids,
+        ids_once,
+        indices_to_write,
+        indices_once,
+        vars_to_write,
+        pids,
+        nparticles,
+        particle_data,
+        time_interval,
+    ):
+        if self.chunks is None:
+            self._chunks = (nparticles, 1)
+        n_unique = len(self._pids_written)
+        if (n_unique > len(ids)) or (n_unique > self.chunks[0]):
+            arrsize = (n_unique, self.chunks[1])
+        else:
+            arrsize = (len(ids), self.chunks[1])
+
+        ds = xr.Dataset(
+            attrs=self.metadata,
+            coords={"trajectory": ("trajectory", pids), "obs": ("obs", np.arange(arrsize[1], dtype=np.int32))},
+        )
+        attrs = _create_variables_attribute_dict(vars_to_write, time_interval)
+        for var in vars_to_write:
+            if var.name != "trajectory":  # 'trajectory' is written as coordinate
+                if var.to_write == "once":
+                    data = np.full((arrsize[0],), _DATATYPES_TO_FILL_VALUES[var.dtype], dtype=var.dtype)
+                    data[ids_once] = particle_data[var.name][indices_once]
+                    dims = ["trajectory"]
+                else:
+                    data = np.full(arrsize, _DATATYPES_TO_FILL_VALUES[var.dtype], dtype=var.dtype)
+                    data[ids, 0] = particle_data[var.name][indices_to_write]
+                    dims = ["trajectory", "obs"]
+                ds[var.name] = xr.DataArray(data=data, dims=dims, attrs=attrs[var.name])
+                ds[var.name].encoding["chunks"] = self.chunks[0] if var.to_write == "once" else self.chunks
+        ds.to_zarr(self.store, mode="w")
+        self._initialized = True
+
+    def _append_write(
+        self, *, ids, obs_indices, ids_once, indices_once, indices_to_write, vars_to_write, particle_data
+    ):
+        Z = zarr.group(store=self.store, overwrite=False)
+        for var in vars_to_write:
+            if len(self._pids_written) > Z[var.name].shape[0]:
+                self._extend_trajectories(Z[var.name], dtype=var.dtype)
+            if var.to_write == "once":
+                if len(ids_once) > 0:
+                    Z[var.name].vindex[ids_once] = particle_data[var.name][indices_once]
+            else:
+                if max(obs_indices) >= Z[var.name].shape[1]:
+                    self._extend_observations(Z[var.name], dtype=var.dtype)
+                Z[var.name].vindex[ids, obs_indices] = particle_data[var.name][indices_to_write]
 
 
 def _get_store_from_pathlike(path: Path | str) -> DirectoryStore:
