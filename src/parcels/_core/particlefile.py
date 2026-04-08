@@ -80,10 +80,9 @@ class ParticleFile:
 
         _assert_valid_chunks_tuple(chunks)
         self._chunks = chunks
-        self._maxids = 0
         self._pids_written = {}
         self.metadata = {}
-        self._create_new_zarrfile = create_new_zarrfile
+        self._initialized = not create_new_zarrfile
 
         if not isinstance(store, zarr.storage.Store):
             store = _get_store_from_pathlike(store)
@@ -124,7 +123,7 @@ class ParticleFile:
 
     @property
     def create_new_zarrfile(self):
-        return self._create_new_zarrfile
+        return not self._initialized
 
     def _extend_zarr_dims(self, Z, dtype, axis):  # noqa: N803
         if axis == 1:
@@ -133,7 +132,7 @@ class ParticleFile:
             if len(obs) == Z.shape[1]:
                 obs.append(np.arange(self.chunks[1]) + obs[-1] + 1)
         else:
-            extra_trajs = self._maxids - Z.shape[0]
+            extra_trajs = len(self._pids_written) - Z.shape[0]
             if len(Z.shape) == 2:
                 a = np.full((extra_trajs, Z.shape[1]), _DATATYPES_TO_FILL_VALUES[dtype], dtype=dtype)
             else:
@@ -182,10 +181,10 @@ class ParticleFile:
 
         pids = particle_data["trajectory"][indices_to_write]
         to_add = sorted(set(pids) - set(self._pids_written.keys()))
+        start = len(self._pids_written)
         for i, pid in enumerate(to_add):
-            self._pids_written[pid] = self._maxids + i
+            self._pids_written[pid] = start + i
         ids = np.array([self._pids_written[p] for p in pids], dtype=int)
-        self._maxids = len(self._pids_written)
 
         once_ids = np.where(particle_data["obs_written"][indices_to_write] == 0)[0]
         if len(once_ids) > 0:
@@ -196,8 +195,9 @@ class ParticleFile:
         if self.create_new_zarrfile:
             if self.chunks is None:
                 self._chunks = (nparticles, 1)
-            if (self._maxids > len(ids)) or (self._maxids > self.chunks[0]):
-                arrsize = (self._maxids, self.chunks[1])
+            n_unique = len(self._pids_written)
+            if (n_unique > len(ids)) or (n_unique > self.chunks[0]):
+                arrsize = (n_unique, self.chunks[1])
             else:
                 arrsize = (len(ids), self.chunks[1])
             ds = xr.Dataset(
@@ -205,7 +205,7 @@ class ParticleFile:
                 coords={"trajectory": ("trajectory", pids), "obs": ("obs", np.arange(arrsize[1], dtype=np.int32))},
             )
             attrs = _create_variables_attribute_dict(pclass, time_interval)
-            obs = np.zeros((self._maxids), dtype=np.int32)
+            obs = np.zeros((len(self._pids_written),), dtype=np.int32)
             for var in vars_to_write:
                 if var.name not in ["trajectory"]:  # because 'trajectory' is written as coordinate
                     if var.to_write == "once":
@@ -223,12 +223,12 @@ class ParticleFile:
                     ds[var.name] = xr.DataArray(data=data, dims=dims, attrs=attrs[var.name])
                     ds[var.name].encoding["chunks"] = self.chunks[0] if var.to_write == "once" else self.chunks
             ds.to_zarr(store, mode="w")
-            self._create_new_zarrfile = False
+            self._initialized = True
         else:
             Z = zarr.group(store=store, overwrite=False)
             obs = particle_data["obs_written"][indices_to_write]
             for var in vars_to_write:
-                if self._maxids > Z[var.name].shape[0]:
+                if len(self._pids_written) > Z[var.name].shape[0]:
                     self._extend_zarr_dims(Z[var.name], dtype=var.dtype, axis=0)
                 if var.to_write == "once":
                     if len(once_ids) > 0:
