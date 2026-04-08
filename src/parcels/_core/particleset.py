@@ -3,7 +3,7 @@ import sys
 import types
 import warnings
 from collections.abc import Iterable
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import xarray as xr
@@ -21,6 +21,9 @@ from parcels._core.utils.time import (
 from parcels._core.warnings import ParticleSetWarning
 from parcels._logger import logger
 from parcels._reprs import _format_zarr_output_location, particleset_repr
+
+if TYPE_CHECKING:
+    from parcels._core.particlefile import ParticleFile
 
 __all__ = ["ParticleSet"]
 
@@ -354,7 +357,7 @@ class ParticleSet:
         dt: datetime.timedelta | np.timedelta64 | float,
         endtime: np.timedelta64 | np.datetime64 | None = None,
         runtime: datetime.timedelta | np.timedelta64 | float | None = None,
-        output_file=None,
+        output_file: ParticleFile | None = None,
         verbose_progress=True,
     ):
         """Execute a given kernel function over the particle set for multiple timesteps.
