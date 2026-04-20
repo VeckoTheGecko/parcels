@@ -483,7 +483,6 @@ def test_particlefile_write_particle_data(tmp_store):
         pclass=pclass,
         nparticles=nparticles,
         ngrids=4,
-        time_interval=time_interval,
         initial={
             "time": np.full(nparticles, fill_value=0),
             "lon": initial_lon,
