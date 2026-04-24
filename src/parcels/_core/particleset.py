@@ -20,7 +20,7 @@ from parcels._core.utils.time import (
 )
 from parcels._core.warnings import ParticleSetWarning
 from parcels._logger import logger
-from parcels._reprs import _format_zarr_output_location, particleset_repr
+from parcels._reprs import particleset_repr
 
 __all__ = ["ParticleSet"]
 
@@ -111,7 +111,6 @@ class ParticleSet:
             pclass=pclass,
             nparticles=lon.size,
             ngrids=len(fieldset.gridset),
-            time_interval=fieldset.time_interval,
             initial=dict(
                 lon=lon,
                 lat=lat,
@@ -415,7 +414,7 @@ class ParticleSet:
 
         # Set up pbar
         if output_file:
-            logger.info(f"Output files are stored in {_format_zarr_output_location(output_file.store)}")
+            logger.info(f"Output files are stored in {output_file.path}")
 
         if verbose_progress:
             pbar = tqdm(total=end_time - start_time, file=sys.stdout)
@@ -450,6 +449,9 @@ class ParticleSet:
                 pbar.update(next_time - time)
 
             time = next_time
+
+        if output_file is not None:
+            output_file.close()
 
         if verbose_progress:
             pbar.close()

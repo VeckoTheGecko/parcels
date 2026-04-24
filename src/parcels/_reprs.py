@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import xarray as xr
-from zarr.storage import DirectoryStore
 
 if TYPE_CHECKING:
     from parcels import Field, FieldSet, ParticleSet
@@ -128,7 +127,7 @@ def timeinterval_repr(ti: Any) -> str:
 def particlefile_repr(pfile: Any) -> str:
     """Return a pretty repr for ParticleFile"""
     out = f"""<{type(pfile).__name__}>
-    store               : {_format_zarr_output_location(pfile.store)}
+    path                : {pfile.path}
     outputdt            : {pfile.outputdt!r}
     chunks              : {pfile.chunks!r}
     create_new_zarrfile : {pfile.create_new_zarrfile!r}
@@ -176,12 +175,6 @@ def _format_list_items_multiline(items: list[str] | dict, level: int = 1, with_b
         return f"[\n{items_str}\n{indentation_str_end}]"
     else:
         return "\n".join([textwrap.indent(e, indentation_str) for e in entries])
-
-
-def _format_zarr_output_location(zarr_obj):
-    if isinstance(zarr_obj, DirectoryStore):
-        return zarr_obj.path
-    return repr(zarr_obj)
 
 
 def is_builtin_object(obj):

@@ -6,6 +6,7 @@ import struct
 from collections import defaultdict
 from pathlib import Path
 
+import cftime
 import numpy as np
 import xarray as xr
 
@@ -151,3 +152,15 @@ def round_and_hash_float_array(arr, decimals=6):
     # Mimic Java's HashMap hash transformation
     h ^= (h >> 20) ^ (h >> 12)
     return h ^ (h >> 7) ^ (h >> 4)
+
+
+def assert_cftime_like_particlefile(parquet_path: Path) -> None:
+    assert parquet_path.suffix == ".parquet", "Path must be a parquet file"
+
+    df = parcels.read_particlefile(parquet_path, decode_times=True)
+
+    # check first value (and hence rest of array) is what we expect
+    assert isinstance(df["time"].values[0], (cftime.datetime, np.datetime64)), (
+        "CF-time values in Parquet did not get properly decoded. Are the attributes correct?"
+    )
+    return
