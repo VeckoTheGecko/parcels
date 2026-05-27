@@ -311,6 +311,7 @@ datasets_sgrid = {
             "lon": (["node_dimension1"], np.linspace(0, 1, 10)),
             "lat": (["node_dimension2"], np.linspace(0, 1, 10)),
         },
+        attrs={"Conventions": "SGRID"},
     ),
     "ds_2d_padded_both": xr.Dataset(
         {
@@ -335,6 +336,7 @@ datasets_sgrid = {
             "lon": (["node_dimension1"], np.linspace(0, 1, 10)),
             "lat": (["node_dimension2"], np.linspace(0, 1, 10)),
         },
+        attrs={"Conventions": "SGRID"},
     ),
     "2d_left_rotated": (
         datasets_comodo["2d_left_rotated"].sgrid.rename(
