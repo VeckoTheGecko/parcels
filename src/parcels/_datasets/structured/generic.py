@@ -140,7 +140,20 @@ def _unrolled_cone_curvilinear_grid():
 
 
 datasets_comodo = {
-    "2d_left_rotated": _rotated_curvilinear_grid(),
+    "2d_left_rotated": _rotated_curvilinear_grid().pipe(
+        sgrid._attach_sgrid_metadata,
+        sgrid.SGrid2DMetadata(
+            cf_role="grid_topology",
+            topology_dimension=2,
+            node_dimensions=("XG", "YG"),
+            face_dimensions=(
+                sgrid.FaceNodePadding("XC", "XG", sgrid.Padding.HIGH),
+                sgrid.FaceNodePadding("YC", "YG", sgrid.Padding.HIGH),
+            ),
+            node_coordinates=("lon", "lat"),
+            vertical_dimensions=(sgrid.FaceNodePadding("ZC", "ZG", sgrid.Padding.HIGH),),
+        ),
+    ),
     "ds_2d_left": xr.Dataset(  # MITgcm indexing style
         {
             "data_g": (["time", "ZG", "YG", "XG"], np.random.rand(T, Z, Y, X)),
@@ -182,6 +195,19 @@ datasets_comodo = {
             "depth": (["ZG"], np.arange(Z)),
             "time": (["time"], TIME, {"axis": "T"}),
         },
+    ).pipe(
+        sgrid._attach_sgrid_metadata,
+        sgrid.SGrid2DMetadata(
+            cf_role="grid_topology",
+            topology_dimension=2,
+            node_dimensions=("XG", "YG"),
+            face_dimensions=(
+                sgrid.FaceNodePadding("XC", "XG", sgrid.Padding.HIGH),
+                sgrid.FaceNodePadding("YC", "YG", sgrid.Padding.HIGH),
+            ),
+            node_coordinates=("lon", "lat"),
+            vertical_dimensions=(sgrid.FaceNodePadding("ZC", "ZG", sgrid.Padding.HIGH),),
+        ),
     ),
     "ds_2d_right": xr.Dataset(  # NEMO indexing style
         {
@@ -224,6 +250,19 @@ datasets_comodo = {
             "depth": (["ZG"], np.arange(Z)),
             "time": (["time"], TIME, {"axis": "T"}),
         },
+    ).pipe(
+        sgrid._attach_sgrid_metadata,
+        sgrid.SGrid2DMetadata(
+            cf_role="grid_topology",
+            topology_dimension=2,
+            node_dimensions=("XG", "YG"),
+            face_dimensions=(
+                sgrid.FaceNodePadding("XC", "XG", sgrid.Padding.LOW),
+                sgrid.FaceNodePadding("YC", "YG", sgrid.Padding.LOW),
+            ),
+            node_coordinates=("lon", "lat"),
+            vertical_dimensions=(sgrid.FaceNodePadding("ZC", "ZG", sgrid.Padding.LOW),),
+        ),
     ),
     "2d_left_unrolled_cone": _unrolled_cone_curvilinear_grid(),
 }
@@ -236,44 +275,16 @@ _COMODO_TO_2D_SGRID = {  # Note "2D SGRID" here is meant in the context of SGRID
     "ZG": "vertical_dimensions_dim1",
     "ZC": "vertical_dimensions_dim2",
 }
+
+
 datasets_sgrid = {
     "ds_2d_padded_high": (
-        datasets_comodo["ds_2d_left"]
-        .pipe(
-            sgrid._attach_sgrid_metadata,
-            sgrid.SGrid2DMetadata(
-                cf_role="grid_topology",
-                topology_dimension=2,
-                node_dimensions=("XG", "YG"),
-                face_dimensions=(
-                    sgrid.FaceNodePadding("XC", "XG", sgrid.Padding.HIGH),
-                    sgrid.FaceNodePadding("YC", "YG", sgrid.Padding.HIGH),
-                ),
-                node_coordinates=("lon", "lat"),
-                vertical_dimensions=(sgrid.FaceNodePadding("ZC", "ZG", sgrid.Padding.HIGH),),
-            ),
-        )
-        .sgrid.rename(
+        datasets_comodo["ds_2d_left"].sgrid.rename(
             _COMODO_TO_2D_SGRID,
         )
     ),
     "ds_2d_padded_low": (
-        datasets_comodo["ds_2d_right"]
-        .pipe(
-            sgrid._attach_sgrid_metadata,
-            sgrid.SGrid2DMetadata(
-                cf_role="grid_topology",
-                topology_dimension=2,
-                node_dimensions=("XG", "YG"),
-                face_dimensions=(
-                    sgrid.FaceNodePadding("XC", "XG", sgrid.Padding.LOW),
-                    sgrid.FaceNodePadding("YC", "YG", sgrid.Padding.LOW),
-                ),
-                node_coordinates=("lon", "lat"),
-                vertical_dimensions=(sgrid.FaceNodePadding("ZC", "ZG", sgrid.Padding.LOW),),
-            ),
-        )
-        .sgrid.rename(
+        datasets_comodo["ds_2d_right"].sgrid.rename(
             _COMODO_TO_2D_SGRID,
         )
     ),
@@ -326,22 +337,7 @@ datasets_sgrid = {
         },
     ),
     "2d_left_rotated": (
-        datasets_comodo["2d_left_rotated"]
-        .pipe(
-            sgrid._attach_sgrid_metadata,
-            sgrid.SGrid2DMetadata(
-                cf_role="grid_topology",
-                topology_dimension=2,
-                node_dimensions=("XG", "YG"),
-                face_dimensions=(
-                    sgrid.FaceNodePadding("XC", "XG", sgrid.Padding.HIGH),
-                    sgrid.FaceNodePadding("YC", "YG", sgrid.Padding.HIGH),
-                ),
-                node_coordinates=("lon", "lat"),
-                vertical_dimensions=(sgrid.FaceNodePadding("ZC", "ZG", sgrid.Padding.HIGH),),
-            ),
-        )
-        .sgrid.rename(
+        datasets_comodo["2d_left_rotated"].sgrid.rename(
             _COMODO_TO_2D_SGRID,
         )
     ),
