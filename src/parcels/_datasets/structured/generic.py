@@ -325,4 +325,24 @@ datasets_sgrid = {
             "lat": (["node_dimension2"], np.linspace(0, 1, 10)),
         },
     ),
+    "2d_left_rotated": (
+        datasets_comodo["2d_left_rotated"]
+        .pipe(
+            sgrid._attach_sgrid_metadata,
+            sgrid.SGrid2DMetadata(
+                cf_role="grid_topology",
+                topology_dimension=2,
+                node_dimensions=("XG", "YG"),
+                face_dimensions=(
+                    sgrid.FaceNodePadding("XC", "XG", sgrid.Padding.HIGH),
+                    sgrid.FaceNodePadding("YC", "YG", sgrid.Padding.HIGH),
+                ),
+                node_coordinates=("lon", "lat"),
+                vertical_dimensions=(sgrid.FaceNodePadding("ZC", "ZG", sgrid.Padding.HIGH),),
+            ),
+        )
+        .sgrid.rename(
+            _COMODO_TO_2D_SGRID,
+        )
+    ),
 }
