@@ -404,7 +404,6 @@ _DATASET_NAME_TO_SGRID_NAME = {
     "ds_2d_right": "ds_2d_padded_low",
     "ds_2d_outer": "ds_2d_padded_none",
     "ds_2d_inner": "ds_2d_padded_both",
-    "2d_left_rotated": "2d_left_rotated",
 }
 
 
