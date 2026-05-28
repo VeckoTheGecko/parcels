@@ -5,7 +5,7 @@ import parcels._sgrid as sgrid
 
 from . import T, X, Y, Z
 
-__all__ = ["T", "X", "Y", "Z", "datasets_comodo", "datasets_sgrid"]
+__all__ = ["T", "X", "Y", "Z", "datasets", "datasets_sgrid"]
 
 TIME = xr.date_range("2000", "2001", T)
 
@@ -139,7 +139,7 @@ def _unrolled_cone_curvilinear_grid():
     )
 
 
-datasets_comodo = {
+datasets = {
     "2d_left_rotated": _rotated_curvilinear_grid().pipe(
         sgrid._attach_sgrid_metadata,
         sgrid.SGrid2DMetadata(
@@ -389,12 +389,12 @@ _COMODO_TO_2D_SGRID = {  # Note "2D SGRID" here is meant in the context of SGRID
 
 datasets_sgrid = {
     "ds_2d_padded_high": (
-        datasets_comodo["ds_2d_left"].sgrid.rename(
+        datasets["ds_2d_left"].sgrid.rename(
             _COMODO_TO_2D_SGRID,
         )
     ),
     "ds_2d_padded_low": (
-        datasets_comodo["ds_2d_right"].sgrid.rename(
+        datasets["ds_2d_right"].sgrid.rename(
             _COMODO_TO_2D_SGRID,
         )
     ),
@@ -449,7 +449,7 @@ datasets_sgrid = {
         attrs={"Conventions": "SGRID"},
     ),
     "2d_left_rotated": (
-        datasets_comodo["2d_left_rotated"].sgrid.rename(
+        datasets["2d_left_rotated"].sgrid.rename(
             _COMODO_TO_2D_SGRID,
         )
     ),
