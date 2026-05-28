@@ -386,27 +386,24 @@ _COMODO_TO_2D_SGRID = {  # Note "2D SGRID" here is meant in the context of SGRID
     "ZC": "vertical_dimensions_dim2",
 }
 
-
-datasets_sgrid = {
-    "ds_2d_padded_high": (
-        datasets["ds_2d_left"].sgrid.rename(
-            _COMODO_TO_2D_SGRID,
-        )
-    ),
-    "ds_2d_padded_low": (
-        datasets["ds_2d_right"].sgrid.rename(
-            _COMODO_TO_2D_SGRID,
-        )
-    ),
-    "ds_2d_padded_none": datasets["ds_2d_outer"].sgrid.rename(
-        _COMODO_TO_2D_SGRID,
-    ),
-    "ds_2d_padded_both": datasets["ds_2d_inner"].sgrid.rename(
-        _COMODO_TO_2D_SGRID,
-    ),
-    "2d_left_rotated": (
-        datasets["2d_left_rotated"].sgrid.rename(
-            _COMODO_TO_2D_SGRID,
-        )
-    ),
+_DATASET_NAME_TO_SGRID_NAME = {
+    "ds_2d_left": "ds_2d_padded_high",
+    "ds_2d_right": "ds_2d_padded_low",
+    "ds_2d_outer": "ds_2d_padded_none",
+    "ds_2d_inner": "ds_2d_padded_both",
+    "2d_left_rotated": "2d_left_rotated",
 }
+
+
+def create_datasets_sgrid(datasets_: dict[str, xr.Dataset]) -> dict[str, xr.Dataset]:
+    ret = {}
+    for name, ds in datasets_.items():
+        if name not in _DATASET_NAME_TO_SGRID_NAME:
+            continue
+        ret[_DATASET_NAME_TO_SGRID_NAME[name]] = ds.sgrid.rename(
+            _COMODO_TO_2D_SGRID,
+        )
+    return ret
+
+
+datasets_sgrid = create_datasets_sgrid(datasets)
