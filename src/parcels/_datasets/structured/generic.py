@@ -5,7 +5,7 @@ import parcels._sgrid as sgrid
 
 from . import T, X, Y, Z
 
-__all__ = ["T", "X", "Y", "Z", "datasets_comodo", "datasets_sgrid"]
+__all__ = ["T", "X", "Y", "Z", "datasets", "datasets_sgrid"]
 
 TIME = xr.date_range("2000", "2001", T)
 
@@ -139,8 +139,21 @@ def _unrolled_cone_curvilinear_grid():
     )
 
 
-datasets_comodo = {
-    "2d_left_rotated": _rotated_curvilinear_grid(),
+datasets = {
+    "2d_left_rotated": _rotated_curvilinear_grid().pipe(
+        sgrid._attach_sgrid_metadata,
+        sgrid.SGrid2DMetadata(
+            cf_role="grid_topology",
+            topology_dimension=2,
+            node_dimensions=("XG", "YG"),
+            face_dimensions=(
+                sgrid.FaceNodePadding("XC", "XG", sgrid.Padding.HIGH),
+                sgrid.FaceNodePadding("YC", "YG", sgrid.Padding.HIGH),
+            ),
+            node_coordinates=("lon", "lat"),
+            vertical_dimensions=(sgrid.FaceNodePadding("ZC", "ZG", sgrid.Padding.HIGH),),
+        ),
+    ),
     "ds_2d_left": xr.Dataset(  # MITgcm indexing style
         {
             "data_g": (["time", "ZG", "YG", "XG"], np.random.rand(T, Z, Y, X)),
@@ -182,6 +195,19 @@ datasets_comodo = {
             "depth": (["ZG"], np.arange(Z)),
             "time": (["time"], TIME, {"axis": "T"}),
         },
+    ).pipe(
+        sgrid._attach_sgrid_metadata,
+        sgrid.SGrid2DMetadata(
+            cf_role="grid_topology",
+            topology_dimension=2,
+            node_dimensions=("XG", "YG"),
+            face_dimensions=(
+                sgrid.FaceNodePadding("XC", "XG", sgrid.Padding.HIGH),
+                sgrid.FaceNodePadding("YC", "YG", sgrid.Padding.HIGH),
+            ),
+            node_coordinates=("lon", "lat"),
+            vertical_dimensions=(sgrid.FaceNodePadding("ZC", "ZG", sgrid.Padding.HIGH),),
+        ),
     ),
     "ds_2d_right": xr.Dataset(  # NEMO indexing style
         {
@@ -224,8 +250,144 @@ datasets_comodo = {
             "depth": (["ZG"], np.arange(Z)),
             "time": (["time"], TIME, {"axis": "T"}),
         },
+    ).pipe(
+        sgrid._attach_sgrid_metadata,
+        sgrid.SGrid2DMetadata(
+            cf_role="grid_topology",
+            topology_dimension=2,
+            node_dimensions=("XG", "YG"),
+            face_dimensions=(
+                sgrid.FaceNodePadding("XC", "XG", sgrid.Padding.LOW),
+                sgrid.FaceNodePadding("YC", "YG", sgrid.Padding.LOW),
+            ),
+            node_coordinates=("lon", "lat"),
+            vertical_dimensions=(sgrid.FaceNodePadding("ZC", "ZG", sgrid.Padding.LOW),),
+        ),
     ),
-    "2d_left_unrolled_cone": _unrolled_cone_curvilinear_grid(),
+    "ds_2d_inner": xr.Dataset(
+        {
+            "data_g": (["time", "ZG", "YG", "XG"], np.random.rand(T, Z, Y, X)),
+            "data_c": (["time", "ZC", "YC", "XC"], np.random.rand(T, Z - 1, Y - 1, X - 1)),
+            "U_A_grid": (["time", "ZG", "YG", "XG"], np.random.rand(T, Z, Y, X)),
+            "V_A_grid": (["time", "ZG", "YG", "XG"], np.random.rand(T, Z, Y, X)),
+            "U_C_grid": (["time", "ZG", "YC", "XG"], np.random.rand(T, Z, Y - 1, X)),
+            "V_C_grid": (["time", "ZG", "YG", "XC"], np.random.rand(T, Z, Y, X - 1)),
+        },
+        coords={
+            "XG": (
+                ["XG"],
+                2 * np.pi / X * np.arange(0, X),
+                {"axis": "X", "c_grid_axis_shift": 0.5},
+            ),
+            "XC": (["XC"], 2 * np.pi / X * (np.arange(0, X - 1) - 0.5), {"axis": "X"}),
+            "YG": (
+                ["YG"],
+                2 * np.pi / (Y) * np.arange(0, Y),
+                {"axis": "Y", "c_grid_axis_shift": 0.5},
+            ),
+            "YC": (
+                ["YC"],
+                2 * np.pi / (Y) * (np.arange(0, Y - 1) - 0.5),
+                {"axis": "Y"},
+            ),
+            "ZG": (
+                ["ZG"],
+                np.arange(Z),
+                {"axis": "Z", "c_grid_axis_shift": 0.5},
+            ),
+            "ZC": (
+                ["ZC"],
+                np.arange(Z - 1) - 0.5,
+                {"axis": "Z"},
+            ),
+            "lon": (["XG"], 2 * np.pi / X * np.arange(0, X)),
+            "lat": (["YG"], 2 * np.pi / (Y) * np.arange(0, Y)),
+            "depth": (["ZG"], np.arange(Z)),
+            "time": (["time"], TIME, {"axis": "T"}),
+        },
+    ).pipe(
+        sgrid._attach_sgrid_metadata,
+        sgrid.SGrid2DMetadata(
+            cf_role="grid_topology",
+            topology_dimension=2,
+            node_dimensions=("XG", "YG"),
+            face_dimensions=(
+                sgrid.FaceNodePadding("XC", "XG", sgrid.Padding.BOTH),
+                sgrid.FaceNodePadding("YC", "YG", sgrid.Padding.BOTH),
+            ),
+            node_coordinates=("lon", "lat"),
+            vertical_dimensions=(sgrid.FaceNodePadding("ZC", "ZG", sgrid.Padding.BOTH),),
+        ),
+    ),
+    "ds_2d_outer": xr.Dataset(
+        {
+            "data_g": (["time", "ZG", "YG", "XG"], np.random.rand(T, Z, Y, X)),
+            "data_c": (["time", "ZC", "YC", "XC"], np.random.rand(T, Z + 1, Y + 1, X + 1)),
+            "U_A_grid": (["time", "ZG", "YG", "XG"], np.random.rand(T, Z, Y, X)),
+            "V_A_grid": (["time", "ZG", "YG", "XG"], np.random.rand(T, Z, Y, X)),
+            "U_C_grid": (["time", "ZG", "YC", "XG"], np.random.rand(T, Z, Y + 1, X)),
+            "V_C_grid": (["time", "ZG", "YG", "XC"], np.random.rand(T, Z, Y, X + 1)),
+        },
+        coords={
+            "XG": (
+                ["XG"],
+                2 * np.pi / X * np.arange(0, X),
+                {"axis": "X", "c_grid_axis_shift": -0.5},
+            ),
+            "XC": (["XC"], 2 * np.pi / X * (np.arange(0, X + 1) + 0.5), {"axis": "X"}),
+            "YG": (
+                ["YG"],
+                2 * np.pi / (Y) * np.arange(0, Y),
+                {"axis": "Y", "c_grid_axis_shift": -0.5},
+            ),
+            "YC": (
+                ["YC"],
+                2 * np.pi / (Y) * (np.arange(0, Y + 1) + 0.5),
+                {"axis": "Y"},
+            ),
+            "ZG": (
+                ["ZG"],
+                np.arange(Z),
+                {"axis": "Z", "c_grid_axis_shift": -0.5},
+            ),
+            "ZC": (
+                ["ZC"],
+                np.arange(Z + 1) + 0.5,
+                {"axis": "Z"},
+            ),
+            "lon": (["XG"], 2 * np.pi / X * np.arange(0, X)),
+            "lat": (["YG"], 2 * np.pi / (Y) * np.arange(0, Y)),
+            "depth": (["ZG"], np.arange(Z)),
+            "time": (["time"], TIME, {"axis": "T"}),
+        },
+    ).pipe(
+        sgrid._attach_sgrid_metadata,
+        sgrid.SGrid2DMetadata(
+            cf_role="grid_topology",
+            topology_dimension=2,
+            node_dimensions=("XG", "YG"),
+            face_dimensions=(
+                sgrid.FaceNodePadding("XC", "XG", sgrid.Padding.NONE),
+                sgrid.FaceNodePadding("YC", "YG", sgrid.Padding.NONE),
+            ),
+            node_coordinates=("lon", "lat"),
+            vertical_dimensions=(sgrid.FaceNodePadding("ZC", "ZG", sgrid.Padding.NONE),),
+        ),
+    ),
+    "2d_left_unrolled_cone": _unrolled_cone_curvilinear_grid().pipe(
+        sgrid._attach_sgrid_metadata,
+        sgrid.SGrid2DMetadata(
+            cf_role="grid_topology",
+            topology_dimension=2,
+            node_dimensions=("XG", "YG"),
+            face_dimensions=(
+                sgrid.FaceNodePadding("XC", "XG", sgrid.Padding.HIGH),
+                sgrid.FaceNodePadding("YC", "YG", sgrid.Padding.HIGH),
+            ),
+            node_coordinates=("lon", "lat"),
+            vertical_dimensions=(sgrid.FaceNodePadding("ZC", "ZG", sgrid.Padding.HIGH),),
+        ),
+    ),
 }
 
 _COMODO_TO_2D_SGRID = {  # Note "2D SGRID" here is meant in the context of SGRID convention (i.e., 1D depth)
@@ -236,93 +398,24 @@ _COMODO_TO_2D_SGRID = {  # Note "2D SGRID" here is meant in the context of SGRID
     "ZG": "vertical_dimensions_dim1",
     "ZC": "vertical_dimensions_dim2",
 }
-datasets_sgrid = {
-    "ds_2d_padded_high": (
-        datasets_comodo["ds_2d_left"]
-        .pipe(
-            sgrid._attach_sgrid_metadata,
-            sgrid.SGrid2DMetadata(
-                cf_role="grid_topology",
-                topology_dimension=2,
-                node_dimensions=("XG", "YG"),
-                face_dimensions=(
-                    sgrid.FaceNodePadding("XC", "XG", sgrid.Padding.HIGH),
-                    sgrid.FaceNodePadding("YC", "YG", sgrid.Padding.HIGH),
-                ),
-                node_coordinates=("lon", "lat"),
-                vertical_dimensions=(sgrid.FaceNodePadding("ZC", "ZG", sgrid.Padding.HIGH),),
-            ),
-        )
-        .sgrid.rename(
-            _COMODO_TO_2D_SGRID,
-        )
-    ),
-    "ds_2d_padded_low": (
-        datasets_comodo["ds_2d_right"]
-        .pipe(
-            sgrid._attach_sgrid_metadata,
-            sgrid.SGrid2DMetadata(
-                cf_role="grid_topology",
-                topology_dimension=2,
-                node_dimensions=("XG", "YG"),
-                face_dimensions=(
-                    sgrid.FaceNodePadding("XC", "XG", sgrid.Padding.LOW),
-                    sgrid.FaceNodePadding("YC", "YG", sgrid.Padding.LOW),
-                ),
-                node_coordinates=("lon", "lat"),
-                vertical_dimensions=(sgrid.FaceNodePadding("ZC", "ZG", sgrid.Padding.LOW),),
-            ),
-        )
-        .sgrid.rename(
-            _COMODO_TO_2D_SGRID,
-        )
-    ),
-    "ds_2d_padded_none": xr.Dataset(
-        {
-            "data_g": (["node_dimension1", "node_dimension2"], np.random.rand(10, 10)),
-            "data_c": (["face_dimension1", "face_dimension2"], np.random.rand(9, 9)),
-            "grid": (
-                [],
-                np.array(0),
-                sgrid.SGrid2DMetadata(
-                    cf_role="grid_topology",
-                    topology_dimension=2,
-                    node_dimensions=("node_dimension1", "node_dimension2"),
-                    face_dimensions=(
-                        sgrid.FaceNodePadding("face_dimension1", "node_dimension1", sgrid.Padding.NONE),
-                        sgrid.FaceNodePadding("face_dimension2", "node_dimension2", sgrid.Padding.NONE),
-                    ),
-                    node_coordinates=("lon", "lat"),
-                ).to_attrs(),
-            ),
-        },
-        coords={
-            "lon": (["node_dimension1"], np.linspace(0, 1, 10)),
-            "lat": (["node_dimension2"], np.linspace(0, 1, 10)),
-        },
-    ),
-    "ds_2d_padded_both": xr.Dataset(
-        {
-            "data_g": (["node_dimension1", "node_dimension2"], np.random.rand(10, 10)),
-            "data_c": (["face_dimension1", "face_dimension2"], np.random.rand(11, 11)),
-            "grid": (
-                [],
-                np.array(0),
-                sgrid.SGrid2DMetadata(
-                    cf_role="grid_topology",
-                    topology_dimension=2,
-                    node_dimensions=("node_dimension1", "node_dimension2"),
-                    face_dimensions=(
-                        sgrid.FaceNodePadding("face_dimension1", "node_dimension1", sgrid.Padding.BOTH),
-                        sgrid.FaceNodePadding("face_dimension2", "node_dimension2", sgrid.Padding.BOTH),
-                    ),
-                    node_coordinates=("lon", "lat"),
-                ).to_attrs(),
-            ),
-        },
-        coords={
-            "lon": (["node_dimension1"], np.linspace(0, 1, 10)),
-            "lat": (["node_dimension2"], np.linspace(0, 1, 10)),
-        },
-    ),
+
+_DATASET_NAME_TO_SGRID_NAME = {
+    "ds_2d_left": "ds_2d_padded_high",
+    "ds_2d_right": "ds_2d_padded_low",
+    "ds_2d_outer": "ds_2d_padded_none",
+    "ds_2d_inner": "ds_2d_padded_both",
 }
+
+
+def create_datasets_sgrid(datasets_: dict[str, xr.Dataset]) -> dict[str, xr.Dataset]:
+    ret = {}
+    for name, ds in datasets_.items():
+        if name not in _DATASET_NAME_TO_SGRID_NAME:
+            continue
+        ret[_DATASET_NAME_TO_SGRID_NAME[name]] = ds.sgrid.rename(
+            _COMODO_TO_2D_SGRID,
+        )
+    return ret
+
+
+datasets_sgrid = create_datasets_sgrid(datasets)

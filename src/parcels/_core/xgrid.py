@@ -40,7 +40,7 @@ def _drop_field_data(ds: xr.Dataset) -> xr.Dataset:
     when passed to the XGCM grid, the object only functions as an in memory representation
     of the grid.
     """
-    return ds.drop_vars(ds.data_vars)
+    return ds.drop_vars(set(ds.data_vars) - {"grid"})  # don't drop sgrid metadata
 
 
 def assert_all_field_dims_have_axis(da: xr.DataArray, xgcm_grid: xgcm.Grid) -> None:

@@ -10,7 +10,7 @@ import xarray as xr
 from parcels import Field, ParticleFile, ParticleSet, VectorField, XGrid, convert
 from parcels._core.fieldset import CalendarError, FieldSet, _datetime_to_msg
 from parcels._datasets.structured.generic import T as T_structured
-from parcels._datasets.structured.generic import datasets_comodo as datasets_structured
+from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.structured.generic import datasets_sgrid
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
 from parcels.interpolators import XLinear, XLinear_Velocity
@@ -113,14 +113,9 @@ def test_fieldset_no_UV(tmp_parquet):
 
 @pytest.mark.parametrize("ds", [pytest.param(ds, id=k) for k, ds in datasets_structured.items()])
 def test_fieldset_from_structured_generic_datasets(ds):
-    grid = XGrid.from_dataset(ds, mesh="flat")
-    fields = []
-    for var in ds.data_vars:
-        fields.append(Field(var, ds[var], grid, interp_method=XLinear))
+    fieldset = FieldSet.from_sgrid_conventions(ds, mesh="flat")
 
-    fieldset = FieldSet(fields)
-
-    assert len(fieldset.fields) == len(ds.data_vars)
+    assert len(fieldset.fields) == len(ds.data_vars) - 1  # `-1` for the SGRID metadata
     for field in fieldset.fields.values():
         utils.assert_valid_field_data(field.data, field.grid)
 
