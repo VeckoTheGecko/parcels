@@ -412,6 +412,30 @@ def test_particlefile_init(tmp_parquet):
     ParticleFile(tmp_parquet, outputdt=np.timedelta64(1, "s"))
 
 
+def test_particlefile_init_existing_path_modes(fieldset, tmp_parquet):
+    pset = ParticleSet(fieldset, pclass=Particle, lon=0, lat=0)
+
+    first_file = ParticleFile(tmp_parquet, outputdt=np.timedelta64(1, "s"))
+    pset.execute(DoNothing, runtime=np.timedelta64(10, "s"), dt=np.timedelta64(1, "s"), output_file=first_file)
+
+    df_first = pd.read_parquet(tmp_parquet)
+
+    with pytest.raises(ValueError, match="already exists"):
+        ParticleFile(tmp_parquet, outputdt=np.timedelta64(1, "s"))
+
+    overwrite_file = ParticleFile(tmp_parquet, outputdt=np.timedelta64(1, "s"), mode="w")
+    pset.execute(DoNothing, runtime=np.timedelta64(10, "s"), dt=np.timedelta64(1, "s"), output_file=overwrite_file)
+
+    df_overwrite = pd.read_parquet(tmp_parquet)
+
+    assert len(df_first) == len(df_overwrite)
+
+
+def test_particlefile_init_invalid_mode(tmp_parquet):
+    with pytest.raises(ValueError, match="Invalid mode value"):
+        ParticleFile(tmp_parquet, outputdt=np.timedelta64(1, "s"), mode="something-else")
+
+
 @pytest.mark.parametrize("name", ["path", "outputdt"])
 def test_particlefile_readonly_attrs(tmp_parquet, name):
     pfile = ParticleFile(tmp_parquet, outputdt=np.timedelta64(1, "s"))

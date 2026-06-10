@@ -61,6 +61,10 @@ class ParticleFile:
         It is either a numpy.timedelta64, a datimetime.timedelta object or a positive float (in seconds).
     compression : {"zstd", "gzip", "snappy", "brotli", None}, optional
         Compression algorithm to use for the Parquet file. Default is "zstd".
+    mode : {None, "w"}, optional
+        Writing behaviour.
+        - None (default): Write dataset, and raise an error if it already exists.
+        - "w": Write dataset, overwriting it.
 
     Returns
     -------
@@ -69,7 +73,11 @@ class ParticleFile:
     """
 
     def __init__(
-        self, path: PathLike, outputdt, compression: Literal["zstd", "gzip", "snappy", "brotli", None] = "zstd"
+        self,
+        path: PathLike,
+        outputdt,
+        compression: Literal["zstd", "gzip", "snappy", "brotli", None] = "zstd",
+        mode: Literal[None, "w"] = None,
     ):
         if not isinstance(outputdt, (np.timedelta64, timedelta, float)):
             raise ValueError(
@@ -92,9 +100,15 @@ class ParticleFile:
 
         self._path = path  # TODO v4: Consider https://arrow.apache.org/docs/python/getstarted.html#working-with-large-data - though a significant question becomes how to partition, perhaps using a particle variable "partition"?
         self._writer: pq.ParquetWriter | None = None
+
+        if mode not in {None, "w"}:
+            raise ValueError(f"Invalid mode value {mode!r}. Expected one of None or 'w'.")
+
         if path.exists():
-            # TODO: Add logic for recovering/appending to existing parquet file
-            raise ValueError(f"{path=!r} already exists. Either delete this file or use a path that doesn't exist.")
+            if mode is None:
+                raise ValueError(f"{path=!r} already exists. Use mode='w' or use a new path.")
+            if mode == "w":
+                path.unlink()
         if not path.parent.exists():
             raise ValueError(f"Folder location for {path=!r} does not exist. Create the folder location first.")
 
