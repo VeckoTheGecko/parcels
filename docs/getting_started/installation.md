@@ -25,7 +25,8 @@ conda config --add channels conda-forge
 conda install -c https://prefix.dev/parcels parcels
 conda install trajan cartopy jupyter
 ```
-<!-- 
+
+<!--
 ```{note}
 For some of the examples, `pytest` also needs to be installed. This can be quickly done with `conda install -n parcels pytest` which installs `pytest` directly into the newly created `parcels` environment.
 ```
