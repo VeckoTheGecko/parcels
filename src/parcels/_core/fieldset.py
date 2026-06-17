@@ -177,8 +177,6 @@ class FieldSet:
 
         if name in self.context:
             raise ValueError(f"FieldSet already has a context with name '{name}'")
-        if not isinstance(value, (float, np.floating, int, np.integer)):
-            raise ValueError(f"FieldSet context variables have to be of type float or int, got a {type(value)}")
         self.context[name] = value
 
     @property
