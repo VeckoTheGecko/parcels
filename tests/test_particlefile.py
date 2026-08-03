@@ -215,13 +215,8 @@ def test_write_timebackward(fieldset, tmp_parquet):
     df = pd.read_parquet(tmp_parquet)
 
     assert df["particle_id"].dtype == "int64"
-    assert bool(
-        df.groupby("particle_id")
-        .apply(
-            lambda x: (np.diff(x["t"]) < 0).all()  # for each particle - set True if it has decreasing time
-        )
-        .all()  # ensure for all particles
-    )
+    dt_per_particle = df.groupby("particle_id")["t"].diff().dropna()
+    assert (dt_per_particle < 0).all()
 
 
 @pytest.mark.xfail
@@ -293,7 +288,13 @@ def test_time_is_age(fieldset, tmp_parquet, outputdt):
     pset = ParticleSet(fieldset, pclass=AgeParticle, x=npart * [0], y=npart * [0], t=time)
     ofile = ParticleFile(tmp_parquet, outputdt=outputdt)
 
-    pset.execute(IncreaseAge, runtime=np.timedelta64(npart * 2, "s"), dt=np.timedelta64(1, "s"), output_file=ofile)
+    if outputdt > np.timedelta64(1, "s"):
+        warning_ctx = pytest.warns(ParticleSetWarning, match="Some of the particles have a start time difference.*")
+    else:
+        warning_ctx = does_not_raise()
+
+    with warning_ctx:
+        pset.execute(IncreaseAge, runtime=np.timedelta64(npart * 2, "s"), dt=np.timedelta64(1, "s"), output_file=ofile)
 
     df = parcels.read_particlefile(tmp_parquet)
 
@@ -311,14 +312,14 @@ def test_sampling_initial_value(fieldset, npart, tmp_parquet):
     SampleParticle = get_default_particle(np.float64).add_variable(Variable("sample", initial=np.nan))
 
     def SampleKernel(particles, fieldset):  # pragma: no cover
-        particles.sample = fieldset.U[particles]
+        particles.sample, _ = fieldset.UV[particles]
 
     x = np.zeros(npart)
     y = np.zeros(npart)
     t = np.zeros(npart, dtype="timedelta64[s]")
 
     pset = ParticleSet(fieldset, pclass=SampleParticle, x=x, y=y, t=t)
-    pset.sample = fieldset.U[pset]  # Sample initial value
+    pset.sample, _ = fieldset.UV[pset]  # Sample initial value
 
     ofile = ParticleFile(tmp_parquet, outputdt=np.timedelta64(1, "s"))
     pset.execute(SampleKernel, runtime=np.timedelta64(2, "s"), dt=np.timedelta64(1, "s"), output_file=ofile)
