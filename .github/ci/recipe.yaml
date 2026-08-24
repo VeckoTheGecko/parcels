@@ -41,6 +41,13 @@ requirements:
     - cf_xarray >=0.8.6
     - zarr >=3
     - uxarray>=2026.04.1
+
+    # TODO: Remove upper matplotlib pin either when Uxarray updates their recipe, or when cartopy release is cut
+    # This pin is not reflected in our pyproject.toml since its due to a misconfiguration in uxarrays conda recipe
+    # - https://github.com/UXARRAY/uxarray/issues/1542#issuecomment-5390203863
+    # - https://github.com/SciTools/cartopy/issues/2691
+    - matplotlib <3.11
+
     - pyogrio # needed for geopandas (uxarray -> geoviews -> geopandas -> pyogrio, but for some reason conda doesn't pick it up automatically)
     - holoviews >= 1.22.0 # https://github.com/prefix-dev/rattler-build/issues/2326
     - pooch >=1.8.0
