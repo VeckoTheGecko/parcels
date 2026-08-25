@@ -64,7 +64,6 @@ class FieldSet:
     """
 
     def __init__(self, models: list[ModelData]):
-        models = list(models)
         if models == []:
             raise ValueError("List of models can't be empty.")
         for model in models:
