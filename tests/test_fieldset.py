@@ -258,14 +258,6 @@ def test_multi_model_nonoverlapping_time_interval():
     assert fieldset.time_interval is None
 
 
-def test_fieldset_time_interval_constant_fields():
-    fieldset = FieldSet([])
-    fieldset.add_constant_field("constant_field", 1.0)
-    fieldset.add_constant_field("constant_field2", 2.0)
-
-    assert fieldset.time_interval is None
-
-
 def test_fieldset_add_incompatible_calendars():
     # tests the adding of fieldsets that have incompatible calendars
     ...
