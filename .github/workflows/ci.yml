@@ -52,7 +52,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
-      - uses: Parcels-code/pixi-lock/create-and-cache@38495788b79a5ff26009aecc15daa9a8310b8832 # v0.1.0
+      - uses: xarray-contrib/pixi-lock/create-and-cache@38495788b79a5ff26009aecc15daa9a8310b8832 # v0.1.0
         id: pixi-lock
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -84,7 +84,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Restore cached pixi lockfile
-        uses: Parcels-code/pixi-lock/restore@38495788b79a5ff26009aecc15daa9a8310b8832 # v0.1.0
+        uses: xarray-contrib/pixi-lock/restore@38495788b79a5ff26009aecc15daa9a8310b8832 # v0.1.0
         with:
           cache-key: ${{ needs.cache-pixi-lock.outputs.cache-key }}
       - uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
@@ -144,7 +144,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Restore cached pixi lockfile
-        uses: Parcels-code/pixi-lock/restore@38495788b79a5ff26009aecc15daa9a8310b8832 # v0.1.0
+        uses: xarray-contrib/pixi-lock/restore@38495788b79a5ff26009aecc15daa9a8310b8832 # v0.1.0
         with:
           cache-key: ${{ needs.cache-pixi-lock.outputs.cache-key }}
       - uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
@@ -199,7 +199,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Restore cached pixi lockfile
-        uses: Parcels-code/pixi-lock/restore@38495788b79a5ff26009aecc15daa9a8310b8832 # v0.1.0
+        uses: xarray-contrib/pixi-lock/restore@38495788b79a5ff26009aecc15daa9a8310b8832 # v0.1.0
         with:
           cache-key: ${{ needs.cache-pixi-lock.outputs.cache-key }}
       - uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
@@ -265,7 +265,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Restore cached pixi lockfile
-        uses: Parcels-code/pixi-lock/restore@38495788b79a5ff26009aecc15daa9a8310b8832 # v0.1.0
+        uses: xarray-contrib/pixi-lock/restore@38495788b79a5ff26009aecc15daa9a8310b8832 # v0.1.0
         with:
           cache-key: ${{ needs.cache-pixi-lock.outputs.cache-key }}
       - uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
@@ -314,7 +314,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Restore cached pixi lockfile
-        uses: Parcels-code/pixi-lock/restore@38495788b79a5ff26009aecc15daa9a8310b8832 # v0.1.0
+        uses: xarray-contrib/pixi-lock/restore@38495788b79a5ff26009aecc15daa9a8310b8832 # v0.1.0
         with:
           cache-key: ${{ needs.cache-pixi-lock.outputs.cache-key }}
       - uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
@@ -344,7 +344,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Restore cached pixi lockfile
-        uses: Parcels-code/pixi-lock/restore@38495788b79a5ff26009aecc15daa9a8310b8832 # v0.1.0
+        uses: xarray-contrib/pixi-lock/restore@38495788b79a5ff26009aecc15daa9a8310b8832 # v0.1.0
         with:
           cache-key: ${{ needs.cache-pixi-lock.outputs.cache-key }}
       - uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
