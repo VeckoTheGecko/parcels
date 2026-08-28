@@ -9,6 +9,7 @@ import cf_xarray  # noqa: F401
 import uxarray as ux
 import xarray as xr
 import zarr
+from chunk_cached_array import wrap_dataset
 from dask import is_dask_collection
 
 import parcels._sgrid as sgrid
@@ -110,6 +111,29 @@ class ModelData(ABC):
         for name in self.scalar_field_names:
             current = windowed.get(name, self.data[name])
             windowed[name] = maybe_windowed(current, max_levels=max_levels)
+        return self
+
+    def to_cached_chunk_arrays(self, *, max_cache_bytes: int = 600_000_000) -> Self:
+        """Wrap dask-backed field data in chunk-level LRU caches.
+
+        Opt-in optimization that replaces each dask-backed data variable's
+        internal storage with a :class:`~chunk_cached_array.ChunkCachedArray`.
+        Repeated vectorized ``.isel()`` calls then hit an in-memory LRU cache
+        keyed by chunk coordinates instead of recomputing dask task graphs.
+
+        Coordinate variables are loaded eagerly into memory (they are small 1D
+        arrays) to avoid dask task-graph construction overhead on every
+        ``.isel()`` call.
+
+        Idempotent: re-invoking is safe — ``wrap_dataset`` skips variables
+        whose storage is already a ``ChunkCachedArray``.
+
+        Parameters
+        ----------
+        max_cache_bytes : int, optional
+            Maximum cache size in bytes, per variable. Defaults to 600 MB.
+        """
+        self.data = wrap_dataset(self.data, max_cache_bytes=max_cache_bytes)
         return self
 
     @property
