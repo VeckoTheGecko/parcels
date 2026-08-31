@@ -1,10 +1,11 @@
 """Benchmark: plain dask vs windowed arrays vs cached chunk arrays.
 
-Uses the ds_2d_left_agrid.zarr dataset with 10,000 particles.
+Scales particle count from 10 to 1,000,000 on ds_2d_left_agrid.zarr.
 """
 
 import time as time_mod
 
+import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 
@@ -47,8 +48,8 @@ def delete_on_boundary(particles, fieldset):
     )
 
 
-def run_simulation(fieldset, ds, npart, label):
-    """Run a simulation and return elapsed time."""
+def run_simulation(fieldset, ds, npart):
+    """Run a simulation and return elapsed time in seconds."""
     np.random.seed(42)
     pset = parcels.ParticleSet(
         fieldset=fieldset,
@@ -65,37 +66,73 @@ def run_simulation(fieldset, ds, npart, label):
         runtime=np.timedelta64(100, "ms"),
         dt=np.timedelta64(10, "ms"),
     )
-    elapsed = time_mod.perf_counter() - t0
-    alive = np.sum(pset.state != parcels.StatusCode.Delete)
-    print(f"  {label}: {elapsed:.3f}s ({alive}/{npart} particles alive)")
-    return elapsed
+    return time_mod.perf_counter() - t0
 
 
 def main():
     zarr_path = "../xarray-interpolation/datasets/ds_2d_left_agrid.zarr"
-    npart = 10_000
+    particle_counts = [10, 100, 1_000, 10_000, 100_000, 1_000_000]
 
     print(f"Loading dataset from {zarr_path}")
     ds = xr.open_zarr(zarr_path, consolidated=False)
     print(f"  shape: {dict(ds.dims)}")
     print(f"  chunks: U_A_grid {ds['U_A_grid'].encoding.get('chunks', 'N/A')}")
 
-    # --- 1. Plain dask ---
-    print("\n1. Plain dask")
-    fieldset_dask = make_fieldset(ds)
-    run_simulation(fieldset_dask, ds, npart, "plain dask")
+    # methods = {
+    #     "plain dask": lambda ds: make_fieldset(ds),
+    # }
+    methods = {
+        "windowed": lambda ds: make_fieldset(ds).to_windowed_arrays(),
+        "cached chunks": lambda ds: make_fieldset(ds).to_cached_chunk_arrays(),
+    }
 
-    # --- 2. Windowed arrays ---
-    print("\n2. Windowed arrays")
-    fieldset_windowed = make_fieldset(ds)
-    fieldset_windowed.to_windowed_arrays()
-    run_simulation(fieldset_windowed, ds, npart, "windowed")
+    results = {name: [] for name in methods}
 
-    # --- 3. Cached chunk arrays ---
-    print("\n3. Cached chunk arrays")
-    fieldset_cached = make_fieldset(ds)
-    fieldset_cached.to_cached_chunk_arrays()
-    run_simulation(fieldset_cached, ds, npart, "cached chunks")
+    for npart in particle_counts:
+        print(f"\n--- {npart:,} particles ---")
+        for name, build_fn in methods.items():
+            fieldset = build_fn(ds)
+            elapsed = run_simulation(fieldset, ds, npart)
+            results[name].append(elapsed)
+            print(f"  {name}: {elapsed:.3f}s")
+
+    # --- Print results table ---
+    print("\n" + "=" * 60)
+    print("Results summary")
+    print("=" * 60)
+    header = f"{'N particles':>12s}"
+    for name in methods:
+        header += f"  {name:>15s}"
+    print(header)
+    print("-" * len(header))
+    for i, npart in enumerate(particle_counts):
+        row = f"{npart:>12,d}"
+        for name in methods:
+            row += f"  {results[name][i]:>14.3f}s"
+        print(row)
+
+    # --- Plot ---
+    fig, ax = plt.subplots(figsize=(9, 6))
+    markers = ["o", "s", "^", "D"]
+    for j, (name, times) in enumerate(results.items()):
+        ax.loglog(
+            particle_counts,
+            times,
+            marker=markers[j % len(markers)],
+            linewidth=2,
+            markersize=7,
+            label=name,
+        )
+
+    ax.set_xlabel("Number of particles")
+    ax.set_ylabel("Wall-clock time (s)")
+    ax.set_title("Parcels simulation scaling: windowed vs cached chunk arrays")
+    ax.legend()
+    ax.grid(True, which="both", alpha=0.3)
+    fig.tight_layout()
+    fig.savefig("benchmark_chunk_cache.png", dpi=150)
+    print("\nPlot saved to benchmark_chunk_cache.png")
+    plt.show()
 
 
 if __name__ == "__main__":
