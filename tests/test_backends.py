@@ -2,11 +2,14 @@ import io
 from pathlib import Path
 from typing import Literal
 
+import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
 
 import parcels
 import parcels.tutorial
+from parcels.kernels import AdvectionRK4
 
 BackendT = Literal["WindowedArray", "Dask", "Zarr", "NumPy", "CachedChunkArray"]
 BACKENDS = {"WindowedArray", "Dask", "Zarr", "NumPy", "CachedChunkArray"}
@@ -27,9 +30,10 @@ def nemo_dataset() -> xr.Dataset:
 
 
 @pytest.fixture(scope="module")
-def nemo_results(tmp_parquet, nemo_dataset) -> tuple[xr.Dataset, Path]:
-    run_simulation(nemo_dataset, tmp_parquet, "NumPy")
-    return nemo_dataset, tmp_parquet
+def nemo_results(tmp_path_factory, nemo_dataset) -> tuple[xr.Dataset, Path]:
+    ref_parquet = tmp_path_factory.mktemp("nemo_ref") / "ref.parquet"
+    run_simulation(nemo_dataset, ref_parquet, "NumPy")
+    return nemo_dataset, ref_parquet
 
 
 def assert_fieldset_backend(fset: parcels.FieldSet, backend: BackendT):
@@ -55,11 +59,31 @@ def run_simulation(ds: xr.Dataset, output_path: Path, backend: BackendT) -> Path
 
     assert_fieldset_backend(fset, backend)
 
-    # TODO Create the particleset by seeding 1000 particles
-    ...
+    npart = 1000
+    lons = np.linspace(1.9, 3.4, npart)
+    lats = np.linspace(51.6, 52.5, npart)
+    z = np.ones(npart)
+    pset = parcels.ParticleSet(fset, x=lons, y=lats, z=z)
 
-    # TODO Advect the particles using a RK4 advection kernel, saving the results to the Parquet file
-    ...
+    def delete_particle(particles, fieldset):
+        error_states = (
+            parcels.StatusCode.ErrorOutOfBounds,
+            parcels.StatusCode.ErrorGridSearching,
+        )
+        for error in error_states:
+            particles.state = np.where(
+                particles.state == error,
+                parcels.StatusCode.Delete,
+                particles.state,
+            )
+
+    pfile = parcels.ParticleFile(output_path, outputdt=np.timedelta64(6, "h"))
+    pset.execute(
+        [AdvectionRK4, delete_particle],
+        runtime=np.timedelta64(3, "D"),
+        dt=np.timedelta64(5, "m"),
+        output_file=pfile,
+    )
 
     return output_path
 
@@ -68,7 +92,7 @@ def run_simulation(ds: xr.Dataset, output_path: Path, backend: BackendT) -> Path
     "backend",
     BACKENDS
     - {
-        "NumPY",  # reference point
+        "NumPy",  # reference point
         "Zarr",  # not supported
     },
 )
@@ -80,4 +104,12 @@ def test_nemo_identical_across_backends(nemo_results, tmp_parquet, backend):
 
     run_simulation(ds, tmp_parquet, backend)
 
-    # TODO: Compare the tmp_parquet with the reference parquet
+    ref_df = pd.read_parquet(ref_parquet)
+    test_df = pd.read_parquet(tmp_parquet)
+
+    ref_df = ref_df.sort_values(["particle_id", "t"]).reset_index(drop=True)
+    test_df = test_df.sort_values(["particle_id", "t"]).reset_index(drop=True)
+
+    np.testing.assert_allclose(test_df["x"].values, ref_df["x"].values, atol=1e-5)
+    np.testing.assert_allclose(test_df["y"].values, ref_df["y"].values, atol=1e-5)
+    np.testing.assert_allclose(test_df["z"].values, ref_df["z"].values, atol=1e-5)
