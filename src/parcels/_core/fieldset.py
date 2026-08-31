@@ -176,7 +176,7 @@ class FieldSet:
         """Wrap dask-backed field data in chunk-level LRU caches.
 
         Opt-in optimization that replaces each dask-backed data variable's
-        internal storage with a :class:`~chunk_cached_array.ChunkCachedArray`.
+        internal storage with a :class:`~parcels._chunk_cached_array.ChunkCachedArray`.
         Delegates to each underlying model; repeated vectorized ``.isel()``
         calls then hit an in-memory LRU cache instead of recomputing dask task
         graphs. NumPy-backed (eager) fields are left unchanged, and re-invoking

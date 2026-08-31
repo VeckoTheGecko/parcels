@@ -9,11 +9,11 @@ import cf_xarray  # noqa: F401
 import uxarray as ux
 import xarray as xr
 import zarr
-from chunk_cached_array import wrap_dataset
 from dask import is_dask_collection
 
 import parcels._sgrid as sgrid
 import parcels._typing as ptyping
+from parcels._chunk_cached_array import wrap_dataset
 from parcels._core._windowed_array import maybe_windowed
 from parcels._core.basegrid import BaseGrid
 from parcels._core.field import Field, VectorField
@@ -117,7 +117,7 @@ class ModelData(ABC):
         """Wrap dask-backed field data in chunk-level LRU caches.
 
         Opt-in optimization that replaces each dask-backed data variable's
-        internal storage with a :class:`~chunk_cached_array.ChunkCachedArray`.
+        internal storage with a :class:`~parcels._chunk_cached_array.ChunkCachedArray`.
         Repeated vectorized ``.isel()`` calls then hit an in-memory LRU cache
         keyed by chunk coordinates instead of recomputing dask task graphs.
 
