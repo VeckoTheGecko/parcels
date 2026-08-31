@@ -154,35 +154,3 @@ class ChunkCachedArray(ExplicitlyIndexedNDArrayMixin):
         if isinstance(indexer, BasicIndexer):
             return self.array[indexer.tuple]
         return self.array[indexer]
-
-    # --- Convenience methods (direct use without xarray) ---
-    # Note: .vindex is inherited from ExplicitlyIndexedNDArrayMixin as a property
-    # returning IndexCallable(self._vindex_get). Do NOT shadow it with a method.
-
-    def isel(
-        self,
-        indexers: dict[str, object],
-        dims: tuple[str, ...],
-    ) -> np.ndarray:
-        """Dimension-name-keyed vectorized indexing (xarray .isel() style).
-
-        Parameters
-        ----------
-        indexers : dict[str, array-like]
-            Mapping of dimension name to index array. Values can be np.ndarray
-            or xr.DataArray (in which case .values is extracted).
-        dims : tuple[str, ...]
-            Ordered dimension names of the underlying array.
-
-        Returns
-        -------
-        np.ndarray
-            1D array of selected values.
-        """
-        arrays = []
-        for dim in dims:
-            idx = indexers[dim]
-            if hasattr(idx, "values"):
-                idx = idx.values
-            arrays.append(np.asarray(idx))
-        return self._raw_vindex(*arrays)
