@@ -70,7 +70,7 @@ def run_simulation(fieldset, ds, npart):
 
 
 def main():
-    zarr_path = "../xarray-interpolation/datasets/ds_2d_left_agrid.zarr"
+    zarr_path = "./datasets/ds_2d_left_agrid.zarr"
     particle_counts = [10, 100, 1_000, 10_000, 100_000, 1_000_000]
 
     print(f"Loading dataset from {zarr_path}")
