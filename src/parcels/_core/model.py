@@ -113,7 +113,7 @@ class ModelData(ABC):
             windowed[name] = maybe_windowed(current, max_levels=max_levels)
         return self
 
-    def to_cached_chunk_arrays(self, *, max_cache_bytes: int = 600_000_000) -> Self:
+    def to_chunk_cached_arrays(self, *, max_cache_bytes: int = 600_000_000) -> Self:
         """Wrap dask-backed field data in chunk-level LRU caches.
 
         Opt-in optimization that replaces each dask-backed data variable's

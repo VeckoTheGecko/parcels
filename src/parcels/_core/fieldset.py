@@ -172,7 +172,7 @@ class FieldSet:
             model.to_windowed_arrays(max_levels=max_levels)
         return self
 
-    def to_cached_chunk_arrays(self, *, max_cache_bytes: int = 600_000_000):
+    def to_chunk_cached_arrays(self, *, max_cache_bytes: int = 600_000_000):
         """Wrap dask-backed field data in chunk-level LRU caches.
 
         Opt-in optimization that replaces each dask-backed data variable's
@@ -193,7 +193,7 @@ class FieldSet:
             ``self``, to allow chaining.
         """
         for model in self.models:
-            model.to_cached_chunk_arrays(max_cache_bytes=max_cache_bytes)
+            model.to_chunk_cached_arrays(max_cache_bytes=max_cache_bytes)
         return self
 
     def add_constant_field(self, name: str, value, mesh: ptyping.TMesh = "spherical"):

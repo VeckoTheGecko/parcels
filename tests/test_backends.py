@@ -55,7 +55,7 @@ def run_simulation(ds: xr.Dataset, output_path: Path, backend: BackendT) -> Path
     if backend == "WindowedArray":
         fset.to_windowed_arrays()
     if backend == "CachedChunkArray":
-        fset.to_cached_chunk_arrays()
+        fset.to_chunk_cached_arrays()
 
     assert_fieldset_backend(fset, backend)
 

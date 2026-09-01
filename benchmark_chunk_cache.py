@@ -83,7 +83,7 @@ def main():
     # }
     methods = {
         "windowed": lambda ds: make_fieldset(ds).to_windowed_arrays(),
-        "cached chunks": lambda ds: make_fieldset(ds).to_cached_chunk_arrays(),
+        "cached chunks": lambda ds: make_fieldset(ds).to_chunk_cached_arrays(),
     }
 
     results = {name: [] for name in methods}
