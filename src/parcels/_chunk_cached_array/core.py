@@ -44,7 +44,7 @@ def wrap_dataset(ds: xr.Dataset, max_cache_bytes: int) -> xr.Dataset:
     for name in ds.data_vars:
         var = ds[name].variable
         if is_duck_array(var._data) and is_dask_collection(var._data):
-            var._data = ChunkCachedArray(var._data, max_cache_bytes)
+            var._data = ChunkCachedArray(var._data, max_cache_bytes)  # type: ignore[assignment, arg-type]
     return ds
 
 
@@ -112,7 +112,7 @@ class ChunkCachedArray(ExplicitlyIndexedNDArrayMixin):
 
         # Sort points by flat chunk key to group them.
         sort_order = np.argsort(flat_keys, kind="mergesort")
-        sorted_flat_keys = flat_keys[sort_order]
+        sorted_flat_keys = flat_keys[sort_order]  # type: ignore[index]
 
         # Find group boundaries.
         boundaries = np.concatenate(([0], np.flatnonzero(np.diff(sorted_flat_keys)) + 1, [n_points]))
