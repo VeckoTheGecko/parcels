@@ -8,7 +8,7 @@ on:
       - main
     types: [opened, reopened, synchronize, labeled]
   schedule:
-    - cron: "0,15,30 2,6 * * *" # At 00:00 UTC on Monday and Wednesday.
+    - cron: "0 0 * * 1,4" # At 00:00 UTC on Monday and Wednesday.
   workflow_dispatch: # allows you to trigger the workflow run manually
 
 concurrency:
@@ -143,7 +143,7 @@ jobs:
     if: |
       always()
       && needs.upstream-dev.result == 'failure'
-      && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+      && github.event_name == 'schedule'
       && github.repository_owner == 'Parcels-code'
 
     permissions:
