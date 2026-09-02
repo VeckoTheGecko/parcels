@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from re_assert import Matches
 
 import parcels.tutorial
 import tests
@@ -38,6 +39,10 @@ def fieldset_two_models():
 def test_fieldset_init_wrong_types():
     with pytest.raises(ValueError, match="Expected `model` to be a ModelData object. Got .*"):
         FieldSet([1.0, 2.0, 3.0])
+
+
+def test_fieldset_repr(fieldset):
+    Matches(r"\<.*FieldSet object at.*\>").assert_matches(repr(fieldset))
 
 
 def test_fieldset_add_context(fieldset):
