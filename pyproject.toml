@@ -100,11 +100,6 @@ select = [
   "NPY201", # numpy 2 deprecations
 ]
 
-exclude = [
-  "tests-v3/**",
-  'docs/user_guide/examples_v3/**',
-] # TODO v4: Remove once folders are gone
-
 ignore = [
   # # Rules intentionally excluded
   # line too long (82 > 79 characters)
