@@ -83,6 +83,9 @@ pytest-cov = "*"
 pytest-reportlog = "*"
 pytest-timeout = "*"
 
+[feature.test.pypi-dependencies]
+re-assert = "*"
+
 [feature.test.tasks]
 tests = { cmd = "pytest", description = "Run the test suite." }
 tests-flaky = { cmd = "pytest -m 'flaky' --run-flaky-tests", description = "Run only flaky tests." }
