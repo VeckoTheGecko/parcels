@@ -44,7 +44,6 @@ def fieldset_repr(fieldset: FieldSet) -> str:
     return textwrap.dedent(out).strip()
 
 
-# TODO add land_value here after HG #2451 is merged
 def field_repr(field: Field, level: int = 0) -> str:
     """Return a pretty repr for Field"""
     with xr.set_options(display_expand_data=False):
