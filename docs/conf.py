@@ -121,7 +121,6 @@ exclude_patterns = [
     "_build",
     "jupyter_execute",
     "**.ipynb_checkpoints",
-    "user_guide/examples_v3",
     ".jupyter_cache",
 ]
 
