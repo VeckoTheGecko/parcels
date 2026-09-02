@@ -23,7 +23,7 @@ dependencies = [
   "cftime >=1.6.3",
   "numpy >=2.1.0",
   "dask >=2024.5.1",
-  "netCDF4 >=1.7.2",
+  "netCDF4 >=1.7.2", # TODO: should we use h5netcdf here instead of netCDF4?
   "zarr >=3",
   "tqdm >=4.50.0",
   "xarray >=2024.5.0",
@@ -33,6 +33,7 @@ dependencies = [
   "pooch >=1.8.0",
   "cf_xarray >=0.8.6",
   "polars >=1.31.0",
+  "tabulate >=0.10.0",
 ]
 
 [project.urls]
@@ -58,8 +59,8 @@ python_files = ["test_*.py", "example_*.py", "*tutorial*"]
 minversion = "7"
 markers = [ # can be skipped by doing `pytest -m "not slow"` etc.
   "slow: slow tests",
-  "validation: validation tests (skipped by default, run with `-m validation`)",
-  "flaky: flaky tests (skipped by default, run with `-m flaky`)",
+  "validation: validation tests (skipped by default, run with `--run-validation-tests`)",
+  "flaky: flaky tests (skipped by default, run with `--run-flaky-tests`)",
   "v4alpha: failing tests that should work for v4alpha",
   "v4future: failing tests that should work for a future release of v4",
   "v4remove: failing tests that should probably be removed later",
