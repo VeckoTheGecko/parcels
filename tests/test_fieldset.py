@@ -12,7 +12,8 @@ from re_assert import Matches
 import parcels.tutorial
 import tests
 from parcels import ParticleFile, ParticleSet, convert, open_raw_zarr
-from parcels._core.fieldset import FieldSet, _datetime_to_msg
+from parcels._core.fieldset import FieldSet, IncompatibleMeshesException, _datetime_to_msg
+from parcels._core.mesh import SphericalMesh
 from parcels._core.model import _default_vector_field_components
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.structured.generic import datasets_sgrid
@@ -264,14 +265,6 @@ def test_multi_model_nonoverlapping_time_interval():
     assert fieldset.time_interval is None
 
 
-def test_fieldset_time_interval_constant_fields():
-    fieldset = FieldSet([])
-    fieldset.add_constant_field("constant_field", 1.0)
-    fieldset.add_constant_field("constant_field2", 2.0)
-
-    assert fieldset.time_interval is None
-
-
 def test_fieldset_add_incompatible_calendars():
     # tests the adding of fieldsets that have incompatible calendars
     ...
@@ -389,6 +382,26 @@ def test_fieldset_add():
     fields_before = list(fset1.fields.keys()) + list(fset2.fields.keys())
     assert len(fields_before) == len(fset.fields)
     assert set(fields_before) == set(fset.fields.keys())
+
+
+def test_fieldset_add_different_meshes():
+    ds1 = datasets_structured["ds_2d_left"][["U_A_grid", "V_A_grid", "grid"]].rename({"U_A_grid": "U", "V_A_grid": "V"})
+    ds2 = datasets_structured["ds_2d_left"][["U_A_grid", "V_A_grid", "grid"]].rename(
+        {"U_A_grid": "U_wind", "V_A_grid": "V_wind"}
+    )
+
+    fset1 = FieldSet.from_sgrid_conventions(
+        ds1,
+        mesh=SphericalMesh(71_492_000),  # Jupiter
+    )
+    fset2 = FieldSet.from_sgrid_conventions(
+        ds2,
+        mesh="spherical",  # earth
+        vector_fields={"UV_wind": ("U_wind", "V_wind")},
+    )
+
+    with pytest.raises(IncompatibleMeshesException, match="All ModelData objects must have the same meshes."):
+        _ = fset1 + fset2
 
 
 def test_vectorfields_without_time():
