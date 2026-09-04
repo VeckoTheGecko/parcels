@@ -12,7 +12,7 @@ import parcels.tutorial
 from parcels.kernels import AdvectionRK4
 
 BackendT = Literal["WindowedArray", "Dask", "Zarr", "NumPy", "CachedChunkArray"]
-BACKENDS = {"WindowedArray", "Dask", "Zarr", "NumPy", "CachedChunkArray"}
+BACKENDS: set[BackendT] = {"WindowedArray", "Dask", "Zarr", "NumPy", "CachedChunkArray"}
 
 
 @pytest.fixture(scope="module")
@@ -36,7 +36,7 @@ def nemo_results(tmp_path_factory, nemo_dataset) -> tuple[xr.Dataset, Path]:
     return nemo_dataset, ref_parquet
 
 
-def assert_fieldset_backend(fset: parcels.FieldSet, backend: BackendT):
+def fieldset_uses_backend(fset: parcels.FieldSet, backend: BackendT):
     # a bit of a hacky way to check for the backend.... probably better for us to change how backends are stored
     buf = io.StringIO()
     fset.describe(buf)
@@ -57,7 +57,7 @@ def run_simulation(ds: xr.Dataset, output_path: Path, backend: BackendT) -> Path
     if backend == "CachedChunkArray":
         fset.to_chunk_cached_arrays()
 
-    assert_fieldset_backend(fset, backend)
+    assert fieldset_uses_backend(fset, backend)
 
     npart = 1000
     lons = np.linspace(1.9, 3.4, npart)
@@ -113,3 +113,28 @@ def test_nemo_identical_across_backends(nemo_results, tmp_parquet, backend):
     np.testing.assert_allclose(test_df["x"].values, ref_df["x"].values, atol=1e-5)
     np.testing.assert_allclose(test_df["y"].values, ref_df["y"].values, atol=1e-5)
     np.testing.assert_allclose(test_df["z"].values, ref_df["z"].values, atol=1e-5)
+
+
+@pytest.mark.parametrize(
+    "backend",
+    BACKENDS
+    - {
+        "NumPy",  # reference point
+        "Zarr",  # not supported with this input data
+    },
+)
+def test_fieldset_describe_backend(nemo_dataset, backend: BackendT):
+    if backend == "NumPy":
+        nemo_dataset.load()
+
+    fieldset = parcels.FieldSet.from_sgrid_conventions(nemo_dataset)
+
+    if backend == "WindowedArray":
+        fieldset.to_windowed_arrays()
+    if backend == "CachedChunkArray":
+        fieldset.to_chunk_cached_arrays()
+
+    assert fieldset_uses_backend(fieldset, backend)
+
+    for other_backend in BACKENDS - {backend}:
+        assert not fieldset_uses_backend(fieldset, other_backend)
