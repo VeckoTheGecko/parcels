@@ -11,8 +11,8 @@ import parcels
 import parcels.tutorial
 from parcels.kernels import AdvectionRK4
 
-BackendT = Literal["WindowedArray", "Dask", "Zarr", "NumPy", "CachedChunkArray"]
-BACKENDS: set[BackendT] = {"WindowedArray", "Dask", "Zarr", "NumPy", "CachedChunkArray"}
+BackendT = Literal["WindowedArray", "Dask", "Zarr", "NumPy", "ChunkCachedArray"]
+BACKENDS: set[BackendT] = {"WindowedArray", "Dask", "Zarr", "NumPy", "ChunkCachedArray"}
 
 
 @pytest.fixture(scope="module")
@@ -54,7 +54,7 @@ def run_simulation(ds: xr.Dataset, output_path: Path, backend: BackendT) -> Path
 
     if backend == "WindowedArray":
         fset.to_windowed_arrays()
-    if backend == "CachedChunkArray":
+    if backend == "ChunkCachedArray":
         fset.to_chunk_cached_arrays()
 
     assert fieldset_uses_backend(fset, backend)
@@ -131,7 +131,7 @@ def test_fieldset_describe_backend(nemo_dataset, backend: BackendT):
 
     if backend == "WindowedArray":
         fieldset.to_windowed_arrays()
-    if backend == "CachedChunkArray":
+    if backend == "ChunkCachedArray":
         fieldset.to_chunk_cached_arrays()
 
     assert fieldset_uses_backend(fieldset, backend)
