@@ -111,7 +111,7 @@ class ChunkCachedArray(ExplicitlyIndexedNDArrayMixin):
         flat_keys = np.ravel_multi_index(chunk_ids, numblocks)
 
         # Sort points by flat chunk key to group them.
-        sort_order = np.argsort(flat_keys, kind="mergesort")
+        sort_order = np.argsort(flat_keys, kind="quicksort")
         sorted_flat_keys = flat_keys[sort_order]  # type: ignore[index]
 
         # Find group boundaries.
