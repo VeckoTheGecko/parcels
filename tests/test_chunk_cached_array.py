@@ -49,6 +49,16 @@ def test_vectorized_indexer_strategy_is_valid_for_numpy(args):
     NumpyIndexingAdapter(arr).vindex[indexer]  # shouldn't error
 
 
+@given(
+    ccast.numpy_array().flatmap(lambda arr: st.tuples(st.just(arr), ccast.out_of_bounds_vectorized_indexer(arr.shape)))
+)
+@no_deadline
+def test_out_of_bounds_vectorized_indexer_strategy_raises_for_numpy(args):
+    arr, indexer = args
+    with pytest.raises(IndexError):
+        NumpyIndexingAdapter(arr).vindex[indexer]
+
+
 # --- Vectorized indexing ---
 
 
@@ -110,3 +120,23 @@ def test_vindex_integer_arrays_and_slices(args):
 def test_vindex_any_vectorized_indexer(args):
     cca, indexer = args
     np.testing.assert_array_equal(cca.vindex[indexer], _expected_vindex(cca, indexer))
+
+
+@st.composite
+def cca_and_out_of_bounds_vectorized_indexer(draw, **kwargs) -> tuple[ChunkCachedArray, VectorizedIndexer]:
+    cca = draw(ccast.chunk_cached_array())
+    indexer = draw(ccast.out_of_bounds_vectorized_indexer(cca.shape, **kwargs))
+    return cca, indexer
+
+
+@given(
+    cca_and_out_of_bounds_vectorized_indexer(
+        allow_slices=False, allow_broadcasting=False, max_index_dims=1, min_index_side=1
+    )
+)
+@pytest.mark.xfail(reason="ChunkCachedArray does not bounds-check indices", strict=True)
+@no_deadline
+def test_vindex_out_of_bounds_raises_index_error(args):
+    cca, indexer = args
+    with pytest.raises(IndexError):
+        cca.vindex[indexer]
