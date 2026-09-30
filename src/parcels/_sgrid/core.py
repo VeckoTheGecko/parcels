@@ -137,7 +137,7 @@ class SGrid2DMetadata(_AttrsSerializable):
     def __repr__(self) -> str:
         return repr_from_dunder_dict(self)
 
-    def __str__(self) -> str:
+    def describe(self) -> str:
         return _grid2d_to_ascii(self)
 
     def __eq__(self, other: Any) -> bool:
@@ -253,7 +253,7 @@ class SGrid3DMetadata(_AttrsSerializable):
     def __repr__(self) -> str:
         return repr_from_dunder_dict(self)
 
-    def __str__(self) -> str:
+    def describe(self) -> str:
         return _grid3d_to_ascii(self)
 
     def __eq__(self, other: Any) -> bool:
