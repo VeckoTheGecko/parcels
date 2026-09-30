@@ -482,8 +482,8 @@ def test_rename_errors():
         ),
     ],
 )
-def test_grid_str(metadata, expected):
-    actual = str(metadata)
+def test_grid_describe(metadata, expected):
+    actual = metadata.describe()
     assert actual == expected
 
 
