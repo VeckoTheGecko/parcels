@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import itertools
+
 import dask.array as da
 import numpy as np
 from hypothesis import strategies as st
@@ -51,7 +53,7 @@ def _dim_chunks(draw, size: int) -> tuple[int, ...]:
     # Choose a sorted set of cut points strictly inside (0, size)
     cuts = draw(st.sets(st.integers(min_value=1, max_value=size - 1), max_size=size - 1)) if size > 1 else set()
     bounds = [0, *sorted(cuts), size]
-    return tuple(int(b - a) for a, b in zip(bounds[:-1], bounds[1:], strict=True))
+    return tuple(int(b - a) for a, b in itertools.pairwise(bounds))
 
 
 @st.composite
@@ -120,6 +122,7 @@ def vectorized_indexer_key(
     shape: tuple[int, ...],
     *,
     allow_slices: bool = True,
+    allow_broadcasting: bool = True,
     min_arrays: int = 0,
     min_index_dims: int = 1,
     max_index_dims: int = 3,
@@ -138,6 +141,9 @@ def vectorized_indexer_key(
         Shape of the array to be indexed.
     allow_slices : bool
         Whether entries may be slices. If False, every entry is an integer array.
+    allow_broadcasting : bool
+        Whether integer arrays may have different (but broadcastable) shapes. If False,
+        all integer arrays have the same shape.
     min_arrays : int
         Minimum number of entries that are integer arrays.
     min_index_dims, max_index_dims : int
@@ -148,9 +154,7 @@ def vectorized_indexer_key(
     ndim = len(shape)
     min_arrays = min(min_arrays, ndim)
     if allow_slices:
-        is_array = draw(
-            st.lists(st.booleans(), min_size=ndim, max_size=ndim).filter(lambda xs: sum(xs) >= min_arrays)
-        )
+        is_array = draw(st.lists(st.booleans(), min_size=ndim, max_size=ndim).filter(lambda xs: sum(xs) >= min_arrays))
     else:
         is_array = [True] * ndim
 
@@ -167,7 +171,7 @@ def vectorized_indexer_key(
     key: list[slice | np.ndarray] = []
     for size, use_array in zip(shape, is_array, strict=True):
         if use_array:
-            if size == 0:
+            if size == 0 or not allow_broadcasting:
                 index_shape = broadcast_shape
             else:
                 # Collapse some dims to length 1 so they get broadcast against the other arrays
