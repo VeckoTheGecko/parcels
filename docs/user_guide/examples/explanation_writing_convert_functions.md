@@ -47,6 +47,15 @@ SGRID describes a staggered grid with two kinds of points along each axis:
 - **nodes** are the cell corners (the Arakawa "F" or "ψ" points). `lon` and `lat` must be defined here.
 - **faces** are the cell centres (the Arakawa "T" or "ρ" points).
 
+A note on the terminology used in this page. An **axis** is one of the physical directions of the model grid: X, Y and (for 3D data) Z. A
+**dimension** is a named dimension of an array in the dataset (e.g. `jt` or `jq`). On a staggered grid,
+variables sit at different positions along the same axis, so a single axis usually has more than one dimension.
+
+SGRID keeps all fields and coordinates in a single dataset, so the dimensions along an axis must have distinct names.
+For example, the Y-node dimension might be called `jq` and the Y-face dimension `jt`. Some models instead write
+each field to a separate file and call both of these dimensions `y`, leaving it to the user to know where each field
+sits on the grid. In that case, your convert function needs to rename the dimensions so that they are distinct.
+
 On an Arakawa C-grid, the variables are placed as follows:
 
 - the zonal velocity `U` sits on the X-node dimension and the Y-face dimension;
