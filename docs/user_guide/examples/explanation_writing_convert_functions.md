@@ -197,7 +197,7 @@ def toyocean_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: x
     ds = ds.rename({"t": "time", "xq": "lon", "yq": "lat", "zw": "depth"})
     ds = ds.set_coords(["lon", "lat", "depth"])
 
-    # 4. ToyOcean's W is positive upward; Parcels expects positive downward
+    # 4. ToyOcean's W is positive upward but depth is positive downward; Parcels expects W to be in the direction of positive depth
     if "W" in ds:
         ds["W"] = -ds["W"]
 
@@ -313,7 +313,7 @@ These are the most common problems when writing a converter, together with the e
 | `Depth DataArray 'depth' ... must be strictly increasing`                                      | Depth is stored as negative values, or ordered from the bottom up. | Negate `depth` if it is negative. If the levels run bottom-up, reverse both vertical dimensions and swap `high`/`low` in the vertical padding. |
 | `Expected right to be a np.timedelta64, datetime, cftime.datetime, or np.datetime64`           | `time` is stored as plain numbers.                                 | Decode it (e.g. with `xr.decode_cf`), or convert it to `timedelta64`.                                                                          |
 | _No error, but particles are shifted by half a cell_                                           | Wrong padding.                                                     | Compare the `describe()` padding diagrams with the grid figure in your model documentation.                                                    |
-| _No error, but particles don't move vertically, or move the wrong way_                         | `W` is not named `W`, or its sign convention is positive upward.   | Rename it to `W`, and negate it if the model uses positive upward.                                                                             |
+| _No error, but particles don't move vertically, or move the wrong way_                         | Vertical velocity is not named `W`, or its sign convention is different from the sign convention of `depth`.   | Rename it to `W`, and negate it to align with the positive `depth` direction.                                                                             |
 
 ## A template to start from
 
