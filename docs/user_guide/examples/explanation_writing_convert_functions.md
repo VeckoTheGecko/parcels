@@ -83,10 +83,15 @@ face:node (padding:both)
     0  0  1  1  2  2  3  3  4  4  5
 ```
 
-In these diagrams `●` is a node and `─────` is a face. The numbers are array indices. With `low` or `high`
-padding, the face and node dimensions have the same length, so **the array sizes cannot tell you which of the two
-is correct**. You need to find out from the model documentation whether corner `i` sits on the low side of cell `i`
-(`high` padding) or on its high side (`low` padding).
+In these diagrams `●` is a node and `─────` is a face. The numbers are array indices. To choose the padding, start
+by comparing the lengths of the face and node dimensions:
+
+- If there is one face fewer than nodes, every face lies between two nodes and there are no extra faces at the ends
+  of the domain: `padding:none`.
+- If there is one face more than nodes, there is an extra face at both ends of the domain: `padding:both`.
+- If the lengths are equal, there is an extra face at one end of the domain only. Face `i` then lies either on the
+  low side of node `i` (`padding:low`) or on its high side (`padding:high`). **The array sizes cannot tell you which
+  of the two is correct**, so you need to find this out from the model documentation.
 
 The metadata is stored as string attributes on the `grid` variable:
 
