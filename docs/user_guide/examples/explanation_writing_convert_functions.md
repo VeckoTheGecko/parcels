@@ -37,7 +37,7 @@ signature.
 | The horizontal node (corner) coordinates are named `lon` and `lat`. They sit on the node dimensions and have a `units` attribute. | Particles are located using these coordinates. Units containing `degree` give a spherical mesh; anything else gives a flat mesh. |
 | The vertical node coordinate is named `depth` and is strictly increasing (positive downward).                                     | Parcels uses `depth` for vertical search.                                                                                        |
 | A `time` coordinate of datetimes, timedeltas or `cftime` objects.                                                                 | Parcels uses it to interpolate in time and to check that the calendars of fields are compatible.                                 |
-| Velocities are named `U`, `V` and (optionally) `W`, with `W` positive downward.                                                   | Parcels auto-detects the `UV` and `UVW` vector fields from these names, which are then used in the built-in advection Kernels.                                                          |
+| Velocities are named `U`, `V` and (optionally) `W`, with `W` positive downward.                                                   | Parcels auto-detects the `UV` and `UVW` vector fields from these names, which are then used in the built-in advection Kernels.   |
 
 ## SGRID in a nutshell
 
