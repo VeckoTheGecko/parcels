@@ -149,17 +149,17 @@ coords = xr.Dataset(
 )
 
 
-def _field(name, dims, value):
+def field(name, dims, value):
     return xr.Dataset(
         {name: (dims, np.full((nt, nk, nj, ni), value))},
         coords={"t": time},
     )
 
 
-uvel = _field("uvel", ("t", "kt", "jt", "iq"), 0.1)  # 0.1 m/s eastward
-vvel = _field("vvel", ("t", "kt", "jq", "it"), 0.05)  # 0.05 m/s northward
-wvel = _field("wvel", ("t", "kw", "jt", "it"), 1e-5)  # 1e-5 m/s upward
-temp = _field("temp", ("t", "kt", "jt", "it"), 15.0)
+uvel = field("uvel", ("t", "kt", "jt", "iq"), 0.1)  # 0.1 m/s eastward
+vvel = field("vvel", ("t", "kt", "jq", "it"), 0.05)  # 0.05 m/s northward
+wvel = field("wvel", ("t", "kw", "jt", "it"), 1e-5)  # 1e-5 m/s upward
+temp = field("temp", ("t", "kt", "jt", "it"), 15.0)
 ```
 
 ### Step 1: Map the model grid onto SGRID
