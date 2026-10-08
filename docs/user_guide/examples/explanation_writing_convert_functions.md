@@ -9,7 +9,8 @@ kernelspec:
 Parcels reads structured-grid model data through {py:func}`parcels.FieldSet.from_sgrid_conventions`. This function
 does not guess how your model grid is laid out. Instead, it reads [SGRID](https://sgrid.github.io/sgrid/) metadata
 attached to the dataset, which says which dimensions hold the cell corners, which hold the cell centres, and how
-they line up.
+they line up. See the [Grids explanation](./explanation_grids.ipynb#nodes-edges-and-faces) for more on where data can
+sit on a grid cell.
 
 Most model output does not (yet) come with SGrid-compliant metadata. For that reason, Parcels ships a set of built-in `convert` functions in
 {py:mod}`parcels.convert` (for example {py:func}`parcels.convert.nemo_to_sgrid`,
@@ -236,9 +237,12 @@ Go through the output and compare it with your table from Step 1:
   `V` the other way round. On the vertical axis, `w` marks the depth levels (`depth`) that sit on the node
   dimension.
 - **The axis padding diagrams** show which side of node `i` the face `i` sits on. Compare them with the grid
-  figure in your model documentation. This is the most important check, because **Parcels cannot detect a wrong
-  padding by itself**. With `low` instead of `high`, the dataset still loads without any error, but every field is
-  shifted by half a grid cell.
+  figure in your model documentation.
+
+```{important}
+The padding is the most important check, because **Parcels cannot detect a wrong padding by itself**. With `low`
+instead of `high`, the dataset still loads without any error, but every field is shifted by half a grid cell.
+```
 
 ### Step 4: Create the FieldSet
 
@@ -281,6 +285,10 @@ expected_z = 100.0 - 1e-5 * seconds
 print(f"x: {pset.x[0]:.4f} (expected ~{expected_x:.4f})")
 print(f"y: {pset.y[0]:.4f} (expected ~{expected_y:.4f})")
 print(f"z: {pset.z[0]:.4f} (expected ~{expected_z:.4f})")
+
+np.testing.assert_allclose(pset.x[0], expected_x, atol=1e-3)
+np.testing.assert_allclose(pset.y[0], expected_y, atol=1e-3)
+np.testing.assert_allclose(pset.z[0], expected_z, atol=1e-3)
 ```
 
 ## Troubleshooting
