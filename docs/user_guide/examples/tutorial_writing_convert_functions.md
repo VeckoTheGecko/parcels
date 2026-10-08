@@ -4,7 +4,7 @@ kernelspec:
   name: python3
 ---
 
-# 🖥️ Writing your own `convert` function
+# 📖 Writing your own convert function
 
 Parcels reads structured-grid model data through {py:func}`parcels.FieldSet.from_sgrid_conventions`. This function
 does not guess how your model grid is laid out. Instead, it reads [SGRID](https://sgrid.github.io/sgrid/) metadata
