@@ -11,7 +11,7 @@ does not guess how your model grid is laid out. Instead, it reads [SGRID](https:
 attached to the dataset, which says which dimensions hold the cell corners, which hold the cell centres, and how
 they line up.
 
-Most model output does not come with this metadata. For that reason Parcels ships a set of `convert` functions in
+Most model output does not (yet) come with SGrid-compliant metadata. For that reason, Parcels ships a set of built-in `convert` functions in
 {py:mod}`parcels.convert` (for example {py:func}`parcels.convert.nemo_to_sgrid`,
 {py:func}`parcels.convert.mitgcm_to_sgrid` and {py:func}`parcels.convert.croco_to_sgrid`). Each one uses what we know
 about a particular model to rename variables and attach the SGRID metadata.
