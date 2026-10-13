@@ -1,6 +1,6 @@
 """
-This module provide a series of functions model outputs (which might be following their
-own conventions) to metadata rich data (i.e., data following SGRID/UGRID as well as CF
+This module provides a series of functions to convert model outputs (which might be following
+their own conventions) to metadata rich data (i.e., data following SGRID/UGRID as well as CF
 conventions). Parcels needs this metadata rich data to discover grid geometries among other
 things.
 
@@ -41,8 +41,6 @@ _NEMO_EXPECTED_COORDS: list[tuple[str, _Status]] = [
 ]
 
 _NEMO_DIMENSION_COORD_NAMES: list[str] = [
-    "x",
-    "y",
     "time",
     "x",
     "x_center",
@@ -215,16 +213,6 @@ def _set_axis_attrs(ds: xr.Dataset, dim_axis: dict[str, XgcmAxisDirection]):
     return ds
 
 
-def _ds_rename_using_standard_names(ds: xr.Dataset | ux.UxDataset, name_dict: dict[str, str]) -> xr.Dataset:
-    for standard_name, rename_to in name_dict.items():
-        name = ds.cf[standard_name].name
-        ds = ds.rename({name: rename_to})
-        logger.info(
-            f"cf_xarray found variable {name!r} with CF standard name {standard_name!r} in dataset, renamed it to {rename_to!r} for Parcels simulation."
-        )
-    return ds
-
-
 def _maybe_convert_time_from_float_to_timedelta(ds: xr.Dataset) -> xr.Dataset:
     if "time" in ds.coords:
         if np.issubdtype(ds["time"].data.dtype, np.floating):
@@ -265,39 +253,6 @@ def _maybe_expand_depth_dimension(ds: xr.Dataset) -> xr.Dataset:
     return ds
 
 
-# TODO is this function still needed, now that we require users to provide field names explicitly?
-def _discover_U_and_V(ds: xr.Dataset, cf_standard_names_fallbacks) -> xr.Dataset:
-    # Assumes that the dataset has U and V data
-
-    if "W" not in ds:
-        for cf_standard_name_W in cf_standard_names_fallbacks["W"]:
-            if cf_standard_name_W in ds.cf.standard_names:
-                ds = _ds_rename_using_standard_names(ds, {cf_standard_name_W: "W"})
-                break
-
-    if "U" in ds and "V" in ds:
-        return ds  # U and V already present
-    elif "U" in ds or "V" in ds:
-        raise ValueError(
-            "Dataset has only one of the two variables 'U' and 'V'. Please rename the appropriate variable in your dataset to have both 'U' and 'V' for Parcels simulation."
-        )
-
-    for cf_standard_name_U, cf_standard_name_V in cf_standard_names_fallbacks["UV"]:
-        if cf_standard_name_U in ds.cf.standard_names:
-            if cf_standard_name_V not in ds.cf.standard_names:
-                raise ValueError(
-                    f"Dataset has variable with CF standard name {cf_standard_name_U!r}, "
-                    f"but not the matching variable with CF standard name {cf_standard_name_V!r}. "
-                    "Please rename the appropriate variables in your dataset to have both 'U' and 'V' for Parcels simulation."
-                )
-        else:
-            continue
-
-        ds = _ds_rename_using_standard_names(ds, {cf_standard_name_U: "U", cf_standard_name_V: "V"})
-        break
-    return ds
-
-
 def _assert_no_grid_metadata(ds: xr.Dataset) -> None:
     if "grid" in ds.cf.cf_roles:
         raise ValueError(
@@ -306,13 +261,15 @@ def _assert_no_grid_metadata(ds: xr.Dataset) -> None:
 
 
 def nemo_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.Dataset):
-    # TODO: Update docstring
-    """Create a FieldSet from a xarray.Dataset from NEMO netcdf files.
+    """Create an sgrid-compliant xarray.Dataset from a dataset of NEMO netcdf files.
 
     Parameters
     ----------
-    ds : xarray.Dataset
-        xarray.Dataset as obtained from a set of NEMO netcdf files.
+    fields : dict[str, xr.Dataset | xr.DataArray]
+        Dictionary of xarray.DataArray objects as obtained from a set of NEMO netcdf files.
+    coords : xarray.Dataset
+        xarray.Dataset containing coordinate variables (e.g., the NEMO mesh mask). Must contain
+        ``glamf`` and ``gphif``, and can optionally contain ``depthw``.
 
     Returns
     -------
