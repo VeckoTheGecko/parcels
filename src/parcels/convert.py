@@ -270,13 +270,6 @@ def _maybe_expand_depth_dimension(ds: xr.Dataset) -> xr.Dataset:
     return ds
 
 
-def _assert_no_grid_metadata(ds: xr.Dataset) -> None:
-    if grid_vars := ds.cf.cf_roles.get("grid_topology"):
-        raise ValueError(
-            f"Dataset already has grid metadata (variables {grid_vars} have cf_role 'grid_topology'). Didn't expect there to be grid metadata on this dataset - please open an issue with more information about your dataset."
-        )
-
-
 def _normalize_fields(fields: dict[str, xr.Dataset | xr.DataArray]) -> dict[str, xr.DataArray]:
     """Return each field as a DataArray named after its key in ``fields``."""
     normalized = {}
@@ -302,27 +295,6 @@ def _flip_w_to_positive_down(ds: xr.Dataset) -> xr.Dataset:
     if "W" in ds.data_vars:
         ds["W"] = ds["W"].copy(data=-ds["W"].data)  # new array, so that the caller's data is left untouched
     return ds
-
-
-def _attach_sgrid_grid(
-    ds: xr.Dataset,
-    *,
-    node_dimensions: tuple[str, str],
-    node_coordinates: tuple[str, str],
-    face_dimensions: tuple[sgrid.FaceNodePadding, sgrid.FaceNodePadding],
-    vertical_dimensions: tuple[sgrid.FaceNodePadding],
-) -> xr.Dataset:
-    """Add a 'grid' variable holding the SGRID metadata of a 2D grid topology, and mark the dataset as SGRID."""
-    _assert_no_grid_metadata(ds)
-    grid = sgrid.SGrid2DMetadata(
-        cf_role="grid_topology",
-        topology_dimension=2,
-        node_dimensions=node_dimensions,
-        node_coordinates=node_coordinates,
-        face_dimensions=face_dimensions,
-        vertical_dimensions=vertical_dimensions,
-    )
-    return sgrid._attach_sgrid_metadata(ds, grid)
 
 
 def nemo_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.Dataset):
@@ -403,15 +375,19 @@ def nemo_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.Da
 
     ds = _flip_w_to_positive_down(ds)
 
-    ds = _attach_sgrid_grid(
+    ds = sgrid._attach_sgrid_metadata(
         ds,
-        node_dimensions=("x", "y"),
-        node_coordinates=("glamf", "gphif"),
-        face_dimensions=(
-            sgrid.FaceNodePadding("x_center", "x", sgrid.Padding.LOW),
-            sgrid.FaceNodePadding("y_center", "y", sgrid.Padding.LOW),
+        sgrid.SGrid2DMetadata(
+            cf_role="grid_topology",
+            topology_dimension=2,
+            node_dimensions=("x", "y"),
+            node_coordinates=("glamf", "gphif"),
+            face_dimensions=(
+                sgrid.FaceNodePadding("x_center", "x", sgrid.Padding.LOW),
+                sgrid.FaceNodePadding("y_center", "y", sgrid.Padding.LOW),
+            ),
+            vertical_dimensions=(sgrid.FaceNodePadding("depth_center", "depth", sgrid.Padding.HIGH),),
         ),
-        vertical_dimensions=(sgrid.FaceNodePadding("depth_center", "depth", sgrid.Padding.HIGH),),
     )
 
     # NEMO models are always in degrees
@@ -457,15 +433,19 @@ def mitgcm_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.
     ds = _set_axis_attrs(ds, _MITGCM.axis_varnames)
     ds = _maybe_swap_depth_direction(ds)
 
-    ds = _attach_sgrid_grid(
+    ds = sgrid._attach_sgrid_metadata(
         ds,
-        node_dimensions=("lon", "lat"),
-        node_coordinates=("lon", "lat"),
-        face_dimensions=(
-            sgrid.FaceNodePadding("XC", "lon", sgrid.Padding.HIGH),
-            sgrid.FaceNodePadding("YC", "lat", sgrid.Padding.HIGH),
+        sgrid.SGrid2DMetadata(
+            cf_role="grid_topology",
+            topology_dimension=2,
+            node_dimensions=("lon", "lat"),
+            node_coordinates=("lon", "lat"),
+            face_dimensions=(
+                sgrid.FaceNodePadding("XC", "lon", sgrid.Padding.HIGH),
+                sgrid.FaceNodePadding("YC", "lat", sgrid.Padding.HIGH),
+            ),
+            vertical_dimensions=(sgrid.FaceNodePadding("depth", "depth", sgrid.Padding.HIGH),),
         ),
-        vertical_dimensions=(sgrid.FaceNodePadding("depth", "depth", sgrid.Padding.HIGH),),
     )
 
     return ds
@@ -504,15 +484,19 @@ def croco_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.D
     ds = _maybe_rename_variables(ds, _CROCO.varnames_mapping)
     ds = _maybe_convert_time_from_float_to_timedelta(ds)
 
-    ds = _attach_sgrid_grid(
+    ds = sgrid._attach_sgrid_metadata(
         ds,
-        node_dimensions=("lon", "lat"),
-        node_coordinates=("lon", "lat"),
-        face_dimensions=(
-            sgrid.FaceNodePadding("xi_u", "xi_rho", sgrid.Padding.HIGH),
-            sgrid.FaceNodePadding("eta_v", "eta_rho", sgrid.Padding.HIGH),
+        sgrid.SGrid2DMetadata(
+            cf_role="grid_topology",
+            topology_dimension=2,
+            node_dimensions=("lon", "lat"),
+            node_coordinates=("lon", "lat"),
+            face_dimensions=(
+                sgrid.FaceNodePadding("xi_u", "xi_rho", sgrid.Padding.HIGH),
+                sgrid.FaceNodePadding("eta_v", "eta_rho", sgrid.Padding.HIGH),
+            ),
+            vertical_dimensions=(sgrid.FaceNodePadding("s_rho", "depth", sgrid.Padding.HIGH),),
         ),
-        vertical_dimensions=(sgrid.FaceNodePadding("s_rho", "depth", sgrid.Padding.HIGH),),
     )
 
     return ds
@@ -556,15 +540,19 @@ def copernicusmarine_to_sgrid(
     ds = _flip_w_to_positive_down(ds)
 
     # use dummy *_center dimensions - this is A grid data (all defined on nodes)
-    ds = _attach_sgrid_grid(
+    ds = sgrid._attach_sgrid_metadata(
         ds,
-        node_dimensions=("lon", "lat"),
-        node_coordinates=("lon", "lat"),
-        face_dimensions=(
-            sgrid.FaceNodePadding("x_center", "lon", sgrid.Padding.LOW),
-            sgrid.FaceNodePadding("y_center", "lat", sgrid.Padding.LOW),
+        sgrid.SGrid2DMetadata(
+            cf_role="grid_topology",
+            topology_dimension=2,
+            node_dimensions=("lon", "lat"),
+            node_coordinates=("lon", "lat"),
+            face_dimensions=(
+                sgrid.FaceNodePadding("x_center", "lon", sgrid.Padding.LOW),
+                sgrid.FaceNodePadding("y_center", "lat", sgrid.Padding.LOW),
+            ),
+            vertical_dimensions=(sgrid.FaceNodePadding("depth_center", "depth", sgrid.Padding.LOW),),
         ),
-        vertical_dimensions=(sgrid.FaceNodePadding("depth_center", "depth", sgrid.Padding.LOW),),
     )
 
     return ds
@@ -607,15 +595,19 @@ def delft3d_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr
     ds = _set_coords(ds, _DELFT3D_X.axis_varnames.keys())
     ds = _set_axis_attrs(ds, _DELFT3D_X.axis_varnames)
 
-    ds = _attach_sgrid_grid(
+    ds = sgrid._attach_sgrid_metadata(
         ds,
-        node_dimensions=("M", "N"),
-        node_coordinates=("lon", "lat"),
-        face_dimensions=(
-            sgrid.FaceNodePadding("X", "M", sgrid.Padding.LOW),
-            sgrid.FaceNodePadding("Y", "N", sgrid.Padding.LOW),
+        sgrid.SGrid2DMetadata(
+            cf_role="grid_topology",
+            topology_dimension=2,
+            node_dimensions=("M", "N"),
+            node_coordinates=("lon", "lat"),
+            face_dimensions=(
+                sgrid.FaceNodePadding("X", "M", sgrid.Padding.LOW),
+                sgrid.FaceNodePadding("Y", "N", sgrid.Padding.LOW),
+            ),
+            vertical_dimensions=(sgrid.FaceNodePadding("Z", "LAYER", sgrid.Padding.HIGH),),
         ),
-        vertical_dimensions=(sgrid.FaceNodePadding("Z", "LAYER", sgrid.Padding.HIGH),),
     )
 
     return ds

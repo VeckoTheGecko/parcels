@@ -230,7 +230,7 @@ def test_convert_raises_on_existing_grid_metadata():
     ds = datasets_circulation_models["ds_copernicusmarine"]
     coords = ds[["time", "depth", "latitude", "longitude"]]
     coords["some_grid"] = xr.DataArray(0, attrs={"cf_role": "grid_topology"})
-    with pytest.raises(ValueError, match="Dataset already has grid metadata"):
+    with pytest.raises(ValueError, match="Dataset already has SGRID metadata"):
         convert.copernicusmarine_to_sgrid(fields={"U": ds["uo"], "V": ds["vo"]}, coords=coords)
 
 
