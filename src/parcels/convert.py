@@ -284,6 +284,12 @@ def _normalize_fields(fields: dict[str, xr.Dataset | xr.DataArray]) -> dict[str,
         if isinstance(field, xr.Dataset):
             # Convenience for model output with one dataset per grid (e.g., NEMO's U and V files) where the
             # variable already has the Parcels name: {"U": ds_u} selects ds_u["U"]. Other variables are dropped.
+            if name not in field.data_vars:
+                raise ValueError(
+                    f"fields[{name!r}] is a Dataset without a variable named {name!r} (it has variables "
+                    f"{list(field.data_vars)}). Either rename the variable in the Dataset to {name!r}, or pass "
+                    f"the DataArray instead (e.g., fields={{{name!r}: ds['<variable name>']}})."
+                )
             normalized[name] = field[name]
             # TODO: logging message, warn if multiple fields are in this dataset
         else:
@@ -325,7 +331,10 @@ def nemo_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.Da
     Parameters
     ----------
     fields : dict[str, xr.Dataset | xr.DataArray]
-        Dictionary of xarray.DataArray objects as obtained from a set of NEMO netcdf files.
+        Dictionary mapping Parcels field names (e.g., "U", "V") to xarray.DataArray objects as obtained from a
+        set of NEMO netcdf files, e.g. ``{"U": ds["uo"]}``. An xarray.Dataset can be given instead of a
+        DataArray if it contains a variable with the field name, which is then used (e.g., ``{"U": ds_u}`` uses
+        ``ds_u["U"]``).
     coords : xarray.Dataset
         xarray.Dataset containing coordinate variables (e.g., the NEMO mesh mask). Must contain
         ``glamf`` and ``gphif``, and can optionally contain ``depthw``.
@@ -420,8 +429,11 @@ def mitgcm_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.
     Parameters
     ----------
     fields : dict[str, xr.Dataset | xr.DataArray]
-        Dictionary of xarray.DataArray objects as obtained from a set of MITgcm netcdf files.
-    coords : xarray.Dataset, optional
+        Dictionary mapping Parcels field names (e.g., "U", "V") to xarray.DataArray objects as obtained from a
+        set of MITgcm netcdf files, e.g. ``{"U": ds["UVEL"]}``. An xarray.Dataset can be given instead of a
+        DataArray if it contains a variable with the field name, which is then used (e.g., ``{"U": ds_u}`` uses
+        ``ds_u["U"]``).
+    coords : xarray.Dataset
         xarray.Dataset containing coordinate variables.
 
     Returns
@@ -465,8 +477,11 @@ def croco_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.D
     Parameters
     ----------
     fields : dict[str, xr.Dataset | xr.DataArray]
-        Dictionary of xarray.DataArray objects as obtained from a set of Croco netcdf files.
-    coords : xarray.Dataset, optional
+        Dictionary mapping Parcels field names (e.g., "U", "V") to xarray.DataArray objects as obtained from a
+        set of Croco netcdf files, e.g. ``{"U": ds["u"]}``. An xarray.Dataset can be given instead of a
+        DataArray if it contains a variable with the field name, which is then used (e.g., ``{"U": ds_u}`` uses
+        ``ds_u["U"]``).
+    coords : xarray.Dataset
         xarray.Dataset containing coordinate variables.
 
     Returns
@@ -511,7 +526,10 @@ def copernicusmarine_to_sgrid(
     Parameters
     ----------
     fields : dict[str, xr.Dataset | xr.DataArray]
-        Dictionary of xarray.DataArray objects as obtained from a set of Copernicus Marine netcdf files.
+        Dictionary mapping Parcels field names (e.g., "U", "V") to xarray.DataArray objects as obtained from a
+        set of Copernicus Marine netcdf files, e.g. ``{"U": ds["uo"]}``. An xarray.Dataset can be given instead of a
+        DataArray if it contains a variable with the field name, which is then used (e.g., ``{"U": ds_u}`` uses
+        ``ds_u["U"]``).
     coords : xarray.Dataset, optional
         xarray.Dataset containing coordinate variables. By default these are time, depth, latitude, longitude
 
@@ -558,7 +576,10 @@ def delft3d_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr
     Parameters
     ----------
     fields : dict[str, xr.Dataset | xr.DataArray]
-        Dictionary of xarray.DataArray objects as obtained from a set of structured-grid Delft3D netcdf files.
+        Dictionary mapping Parcels field names (e.g., "U", "V") to xarray.DataArray objects as obtained from a
+        set of structured-grid Delft3D netcdf files, e.g. ``{"U": ds["VELU"]}``. An xarray.Dataset can be given
+        instead of a DataArray if it contains a variable with the field name, which is then used (e.g.,
+        ``{"U": ds_u}`` uses ``ds_u["U"]``).
     coords : xarray.Dataset
         xarray.Dataset containing coordinate variables.
 

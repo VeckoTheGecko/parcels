@@ -255,3 +255,9 @@ def test_convert_nemo_surface_adds_depth_after_time():
     ds = convert.nemo_to_sgrid(fields=dict(U=U, V=V), coords=coords)
     assert ds["U"].dims[:2] == ("time", "depth")
     assert ds["V"].dims[:2] == ("time", "depth")
+
+
+def test_convert_dataset_field_without_matching_variable():
+    ds = datasets_circulation_models["ds_copernicusmarine"]
+    with pytest.raises(ValueError, match=r"fields\['U'\] is a Dataset without a variable named 'U'"):
+        convert.copernicusmarine_to_sgrid(fields={"U": ds, "V": ds})
