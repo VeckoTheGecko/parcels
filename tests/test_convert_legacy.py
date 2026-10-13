@@ -407,7 +407,24 @@ def _apply_intentional_changes(case: Case, legacy: Outcome) -> Outcome:
     if legacy.result is not None and case.converter.endswith("_to_sgrid"):
         # All SGRID converters now clear the global attributes and only set "Conventions"
         legacy.result.attrs = {"Conventions": "SGRID"}
+
+    # Adding a missing depth dimension now logs the same message for all converters, and puts depth after time
+    old_depth_messages = {
+        "No depth dimension found in your dataset. Assuming no depth (i.e., surface data).",
+        "No depth dimension found in dataset. Added a singleton depth dimension.",
+    }
+    if any(message in old_depth_messages for _, message in legacy.logs):
+        legacy.logs = [
+            (level, _NEW_DEPTH_MESSAGE if message in old_depth_messages else message) for level, message in legacy.logs
+        ]
+        if legacy.result is not None:
+            legacy.result = legacy.result.transpose("time", "depth", ..., missing_dims="ignore")
     return legacy
+
+
+_NEW_DEPTH_MESSAGE = (
+    "No depth dimension found in dataset. Assuming surface data and adding a singleton depth dimension."
+)
 
 
 @pytest.mark.parametrize("case", [pytest.param(c, id=c.id, marks=c.marks) for c in CASES])

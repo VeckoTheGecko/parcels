@@ -261,20 +261,12 @@ def _maybe_swap_depth_direction(ds: xr.Dataset) -> xr.Dataset:
     return ds
 
 
-# TODO: Merge with _maybe_expand_depth_dimension. They differ in log message and in where the depth
-# dimension is inserted (first here, second there).
-def _nemo_maybe_expand_depth_dimension(ds: xr.Dataset) -> xr.Dataset:
-    if "depth" not in ds.dims:
-        logger.info("No depth dimension found in your dataset. Assuming no depth (i.e., surface data).", stacklevel=1)
-        ds = ds.expand_dims({"depth": [0]})
-        ds["depth"] = xr.DataArray([0], dims=["depth"])
-    return ds
-
-
 def _maybe_expand_depth_dimension(ds: xr.Dataset) -> xr.Dataset:
     if "depth" not in ds.dims:
-        ds = ds.expand_dims(dim={"depth": [0]}, axis=1)
-        logger.info("No depth dimension found in dataset. Added a singleton depth dimension.")
+        logger.info(
+            "No depth dimension found in dataset. Assuming surface data and adding a singleton depth dimension."
+        )
+        ds = ds.expand_dims(depth=[0]).transpose("time", "depth", ..., missing_dims="ignore")
     return ds
 
 
@@ -384,7 +376,7 @@ def nemo_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.Da
 
     ds = _maybe_rename_variables(ds, _NEMO.varnames_mapping)
     ds = _rename_nemo_depth_dims(ds)
-    ds = _nemo_maybe_expand_depth_dimension(ds)
+    ds = _maybe_expand_depth_dimension(ds)
     ds = _drop_unused_dimensions_and_coords(ds, _NEMO_DIMENSION_COORD_NAMES)
     ds = _assign_dims_as_coords(ds, _NEMO_DIMENSION_COORD_NAMES)
     ds = _set_coords(ds, _NEMO_DIMENSION_COORD_NAMES)

@@ -190,7 +190,10 @@ def test_convert_copernicusmarine_nodepth(caplog):
     ds = ds.isel(depth=0).drop_vars("depth")
     ds_fset = convert.copernicusmarine_to_sgrid(fields={"uo": ds["uo"]})
     FieldSet.from_sgrid_conventions(ds_fset)
-    assert "No depth dimension found in dataset. Added a singleton depth dimension." in caplog.text
+    assert (
+        "No depth dimension found in dataset. Assuming surface data and adding a singleton depth dimension."
+        in caplog.text
+    )
 
 
 def test_convert_fesom_to_ugrid():
@@ -243,3 +246,12 @@ def test_convert_sets_only_conventions_global_attr():
     ds = open_remote_dataset("Delft3D_data/Rotterdam_tiny")
     ds_fset = convert.delft3d_to_sgrid(fields={"U": ds["VELU"], "V": ds["VELV"]}, coords=ds[["XZETA", "YZETA"]])
     assert ds_fset.attrs == {"Conventions": "SGRID"}
+
+
+def test_convert_nemo_surface_adds_depth_after_time():
+    U = parcels.tutorial.open_dataset("NemoCurvilinear_data_zonal/U")
+    V = parcels.tutorial.open_dataset("NemoCurvilinear_data_zonal/V")
+    coords = parcels.tutorial.open_dataset("NemoCurvilinear_data_zonal/mesh_mask")
+    ds = convert.nemo_to_sgrid(fields=dict(U=U, V=V), coords=coords)
+    assert ds["U"].dims[:2] == ("time", "depth")
+    assert ds["V"].dims[:2] == ("time", "depth")
