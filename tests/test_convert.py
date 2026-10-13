@@ -201,3 +201,24 @@ def test_convert_fesom_to_ugrid():
     uxds = ux.UxDataset(data_files, uxgrid=grid)
     uxds = convert.fesom_to_ugrid(uxds)
     FieldSet.from_ugrid_conventions(uxds)
+
+
+@pytest.mark.xfail(reason="Converters negate W in place, modifying the caller's data.")
+@pytest.mark.parametrize("converter", ["copernicusmarine_to_sgrid", "nemo_to_sgrid"])
+def test_convert_does_not_modify_input_w(converter):
+    if converter == "copernicusmarine_to_sgrid":
+        ds = datasets_circulation_models["ds_copernicusmarine"].copy(deep=True)
+        W = 0.5 * ds["uo"]
+        kwargs = dict(fields={"U": ds["uo"], "V": ds["vo"], "W": W})
+    else:
+        U, V, W, coords = (
+            parcels.tutorial.open_dataset(f"NemoNorthSeaORCA025-N006_data/{name}")
+            for name in ("U", "V", "W", "mesh_mask")
+        )
+        W = W["wo"].load()
+        kwargs = dict(fields={"U": U["uo"], "V": V["vo"], "W": W}, coords=coords)
+    W_before = W.copy(deep=True)
+
+    getattr(convert, converter)(**kwargs)
+
+    xr.testing.assert_identical(W, W_before)
