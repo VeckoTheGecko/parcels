@@ -152,10 +152,12 @@ coords = xr.Dataset(
 
 
 def field(name, dims, value):
-    return xr.Dataset(
+    ds = xr.Dataset(
         {name: (dims, np.full((nt, nk, nj, ni), value))},
         coords={"t": time},
     )
+    ds["t"].attrs['axis'] = 'T'
+    return ds
 
 
 uvel = field("uvel", ("t", "kt", "jt", "iq"), 0.1)  # 0.1 m/s eastward
