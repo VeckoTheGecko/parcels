@@ -203,7 +203,6 @@ def test_convert_fesom_to_ugrid():
     FieldSet.from_ugrid_conventions(uxds)
 
 
-@pytest.mark.xfail(reason="Converters negate W in place, modifying the caller's data.")
 @pytest.mark.parametrize("converter", ["copernicusmarine_to_sgrid", "nemo_to_sgrid"])
 def test_convert_does_not_modify_input_w(converter):
     if converter == "copernicusmarine_to_sgrid":

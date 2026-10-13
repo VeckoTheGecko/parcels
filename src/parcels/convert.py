@@ -302,8 +302,7 @@ def _normalize_fields(fields: dict[str, xr.Dataset | xr.DataArray]) -> dict[str,
 def _flip_w_to_positive_down(ds: xr.Dataset) -> xr.Dataset:
     """Negate W to convert from up positive to down positive (as that's the direction of positive z)."""
     if "W" in ds.data_vars:
-        # TODO: This modifies the caller's data in place (see test_convert_does_not_modify_input_w)
-        ds["W"].data *= -1
+        ds["W"] = ds["W"].copy(data=-ds["W"].data)  # new array, so that the caller's data is left untouched
     return ds
 
 
