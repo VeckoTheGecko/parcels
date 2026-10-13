@@ -12,6 +12,7 @@ be determined before they pass it to the FieldSet constructor.
 
 from __future__ import annotations
 
+import dataclasses
 import enum
 import typing
 import warnings
@@ -34,12 +35,43 @@ class _Status(enum.Enum):
     OPTIONAL = enum.auto()
 
 
-_NEMO_EXPECTED_COORDS: list[tuple[str, _Status]] = [
-    ("glamf", _Status.REQUIRED),
-    ("gphif", _Status.REQUIRED),
-    ("depthw", _Status.OPTIONAL),
-]
+@dataclasses.dataclass(frozen=True)
+class _ModelConventions:
+    """Names used in a model's output, and how they map onto the names Parcels expects."""
 
+    expected_coords: list[tuple[str, _Status]] = dataclasses.field(default_factory=list)
+    """Coordinates to pick out of the user-provided ``coords`` dataset."""
+    varnames_mapping: dict[str, str] = dataclasses.field(default_factory=dict)
+    """Renames for variables and coordinates."""
+    axis_varnames: dict[str, XgcmAxisDirection] = dataclasses.field(default_factory=dict)
+    """CF axis of each dimension coordinate (set as its 'axis' attribute)."""
+
+
+_NEMO = _ModelConventions(
+    expected_coords=[
+        ("glamf", _Status.REQUIRED),
+        ("gphif", _Status.REQUIRED),
+        ("depthw", _Status.OPTIONAL),
+    ],
+    varnames_mapping={
+        "time_counter": "time",
+        "depthw": "depth",
+        "uo": "U",
+        "vo": "V",
+        "wo": "W",
+    },
+    axis_varnames={
+        "x": "X",
+        "x_center": "X",
+        "y": "Y",
+        "y_center": "Y",
+        "depth": "Z",
+        "depth_center": "Z",
+        "time": "T",
+    },
+)
+
+# Dimensions and coordinates kept in the NEMO output (others are dropped)
 _NEMO_DIMENSION_COORD_NAMES: list[str] = [
     "time",
     "x",
@@ -52,47 +84,47 @@ _NEMO_DIMENSION_COORD_NAMES: list[str] = [
     "gphif",
 ]
 
-_NEMO_AXIS_VARNAMES: dict[str, XgcmAxisDirection] = {
-    "x": "X",
-    "x_center": "X",
-    "y": "Y",
-    "y_center": "Y",
-    "depth": "Z",
-    "depth_center": "Z",
-    "time": "T",
-}
-
-_NEMO_VARNAMES_MAPPING: dict[str, str] = {
-    "time_counter": "time",
+# NEMO uses a separate depth dimension per grid (T, U, V and W points)
+_NEMO_DEPTH_DIM_RENAMES: dict[str, str] = {
+    "depthu": "depth_center",
+    "depthv": "depth_center",
+    "deptht": "depth_center",
     "depthw": "depth",
-    "uo": "U",
-    "vo": "V",
-    "wo": "W",
 }
 
-_MITGCM_EXPECTED_COORDS: list[tuple[str, _Status]] = [(name, _Status.REQUIRED) for name in ["XG", "YG", "Zl"]]
+_MITGCM = _ModelConventions(
+    expected_coords=[(name, _Status.REQUIRED) for name in ["XG", "YG", "Zl"]],
+    varnames_mapping={
+        "XG": "lon",
+        "YG": "lat",
+        "Zl": "depth",
+    },
+    axis_varnames={
+        "XC": "X",
+        "XG": "X",
+        "Xp1": "X",
+        "lon": "X",
+        "YC": "Y",
+        "YG": "Y",
+        "Yp1": "Y",
+        "lat": "Y",
+        "Zu": "Z",
+        "Zl": "Z",
+        "Zp1": "Z",
+        "time": "T",
+    },
+)
 
-_MITGCM_AXIS_VARNAMES: dict[str, XgcmAxisDirection] = {
-    "XC": "X",
-    "XG": "X",
-    "Xp1": "X",
-    "lon": "X",
-    "YC": "Y",
-    "YG": "Y",
-    "Yp1": "Y",
-    "lat": "Y",
-    "Zu": "Z",
-    "Zl": "Z",
-    "Zp1": "Z",
-    "time": "T",
-}
+_CROCO = _ModelConventions(
+    expected_coords=[(name, _Status.REQUIRED) for name in ["x_rho", "y_rho", "s_w", "time"]],
+    varnames_mapping={
+        "x_rho": "lon",
+        "y_rho": "lat",
+        "s_w": "depth",
+    },
+)
 
-_MITGCM_VARNAMES_MAPPING: dict[str, str] = {
-    "XG": "lon",
-    "YG": "lat",
-    "Zl": "depth",
-}
-
+# Copernicus Marine data is CF compliant, so coordinates are found by their CF axis and renamed
 _COPERNICUS_MARINE_AXIS_VARNAMES: dict[XgcmAxisDirection, str] = {
     "X": "lon",
     "Y": "lat",
@@ -100,32 +132,25 @@ _COPERNICUS_MARINE_AXIS_VARNAMES: dict[XgcmAxisDirection, str] = {
     "T": "time",
 }
 
-_DELFT3D_X_EXPECTED_COORDS: list[tuple[str, _Status]] = [(name, _Status.REQUIRED) for name in ["XZETA", "YZETA"]]
+_DELFT3D_X = _ModelConventions(
+    expected_coords=[(name, _Status.REQUIRED) for name in ["XZETA", "YZETA"]],
+    varnames_mapping={
+        "XZETA": "lon",
+        "YZETA": "lat",
+        "SIGMA_C": "depth",
+        "TIME": "time",
+    },
+    axis_varnames={
+        "M": "X",
+        "N": "Y",
+        "LAYER": "Z",
+        "time": "T",
+    },
+)
 
-_DELFT3D_X_VARNAMES_MAPPING: dict[str, str] = {
-    "XZETA": "lon",
-    "YZETA": "lat",
-    "SIGMA_C": "depth",
-    "TIME": "time",
-}
-
-_DELFT3D_X_AXIS_VARNAMES: dict[str, XgcmAxisDirection] = {
-    "M": "X",
-    "N": "Y",
-    "LAYER": "Z",
-    "time": "T",
-}
-
-
-_CROCO_EXPECTED_COORDS: list[tuple[str, _Status]] = [
-    (name, _Status.REQUIRED) for name in ["x_rho", "y_rho", "s_w", "time"]
-]
-
-_CROCO_VARNAMES_MAPPING: dict[str, str] = {
-    "x_rho": "lon",
-    "y_rho": "lat",
-    "s_w": "depth",
-}
+# Known vertical dimension names of UGRID models, as {"interface": ..., "center": ...}
+_FESOM2_VERTICAL_DIMS = {"interface": "nz", "center": "nz1"}
+_ICON_VERTICAL_DIMS = {"interface": "depth_2", "center": "depth"}
 
 
 def _pick_expected_coords(coords: xr.Dataset, expected_coord_names: list[tuple[str, _Status]]) -> xr.Dataset:
@@ -139,21 +164,11 @@ def _pick_expected_coords(coords: xr.Dataset, expected_coord_names: list[tuple[s
     return xr.Dataset(coords_to_use)
 
 
-def _maybe_bring_other_depths_to_depth(ds: xr.Dataset):
+def _rename_nemo_depth_dims(ds: xr.Dataset) -> xr.Dataset:
     for var in ds.data_vars:
-        for old_depth, target in [
-            ("depthu", "depth_center"),
-            ("depthv", "depth_center"),
-            ("deptht", "depth_center"),
-            ("depthw", "depth"),
-        ]:
+        for old_depth, target in _NEMO_DEPTH_DIM_RENAMES.items():
             if old_depth in ds[var].dims:
                 ds[var] = ds[var].rename({old_depth: target})
-
-    if "depth" not in ds.dims:
-        logger.info("No depth dimension found in your dataset. Assuming no depth (i.e., surface data).", stacklevel=1)
-        ds = ds.expand_dims({"depth": [0]})
-        ds["depth"] = xr.DataArray([0], dims=["depth"])
     return ds
 
 
@@ -246,6 +261,16 @@ def _maybe_swap_depth_direction(ds: xr.Dataset) -> xr.Dataset:
     return ds
 
 
+# TODO: Merge with _maybe_expand_depth_dimension. They differ in log message and in where the depth
+# dimension is inserted (first here, second there).
+def _nemo_maybe_expand_depth_dimension(ds: xr.Dataset) -> xr.Dataset:
+    if "depth" not in ds.dims:
+        logger.info("No depth dimension found in your dataset. Assuming no depth (i.e., surface data).", stacklevel=1)
+        ds = ds.expand_dims({"depth": [0]})
+        ds["depth"] = xr.DataArray([0], dims=["depth"])
+    return ds
+
+
 def _maybe_expand_depth_dimension(ds: xr.Dataset) -> xr.Dataset:
     if "depth" not in ds.dims:
         ds = ds.expand_dims(dim={"depth": [0]}, axis=1)
@@ -329,7 +354,7 @@ def nemo_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.Da
     If you encounter issues with your specific NEMO dataset, please open an issue on the Parcels GitHub repository with details about your dataset.
 
     """
-    coords = _pick_expected_coords(coords, _NEMO_EXPECTED_COORDS)
+    coords = _pick_expected_coords(coords, _NEMO.expected_coords)
     field_das = _normalize_fields(fields)
 
     for name, field_da in field_das.items():
@@ -358,13 +383,14 @@ def nemo_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.Da
     # if len(coords.dims) != 2: #! This should really be looking at the dimensionality of the lons and lats arrays. Currently having 2D lon lat and 1D depth triggers this `if` clause
     #     raise ValueError("Expected coordinates to be 2 dimensional")
     ds = xr.merge(list(field_das.values()) + [coords])
-    ds = _maybe_rename_variables(ds, _NEMO_VARNAMES_MAPPING)
-    ds = _maybe_bring_other_depths_to_depth(ds)
+    ds = _maybe_rename_variables(ds, _NEMO.varnames_mapping)
+    ds = _rename_nemo_depth_dims(ds)
+    ds = _nemo_maybe_expand_depth_dimension(ds)
     ds = _drop_unused_dimensions_and_coords(ds, _NEMO_DIMENSION_COORD_NAMES)
     ds = _assign_dims_as_coords(ds, _NEMO_DIMENSION_COORD_NAMES)
     ds = _set_coords(ds, _NEMO_DIMENSION_COORD_NAMES)
     ds = _maybe_remove_depth_from_lonlat(ds)
-    ds = _set_axis_attrs(ds, _NEMO_AXIS_VARNAMES)
+    ds = _set_axis_attrs(ds, _NEMO.axis_varnames)
 
     expected_axes = set("XYZT")  # TODO: Update after we have support for 2D spatial fields
     if missing_axes := (expected_axes - set(ds.cf.axes)):
@@ -420,13 +446,13 @@ def mitgcm_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.
     """
     field_das = _normalize_fields(fields)
 
-    coords = _pick_expected_coords(coords, _MITGCM_EXPECTED_COORDS)
+    coords = _pick_expected_coords(coords, _MITGCM.expected_coords)
 
     ds = xr.merge(list(field_das.values()) + [coords], compat="override")
     ds.attrs.clear()  # Clear global attributes from the merging
 
-    ds = _maybe_rename_variables(ds, _MITGCM_VARNAMES_MAPPING)
-    ds = _set_axis_attrs(ds, _MITGCM_AXIS_VARNAMES)
+    ds = _maybe_rename_variables(ds, _MITGCM.varnames_mapping)
+    ds = _set_axis_attrs(ds, _MITGCM.axis_varnames)
     ds = _maybe_swap_depth_direction(ds)
 
     _assert_no_grid_metadata(ds)
@@ -466,12 +492,12 @@ def croco_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.D
     """
     field_das = _normalize_fields(fields)
 
-    coords = _pick_expected_coords(coords, _CROCO_EXPECTED_COORDS)
+    coords = _pick_expected_coords(coords, _CROCO.expected_coords)
 
     ds = xr.merge(list(field_das.values()) + [coords])
     ds.attrs.clear()  # Clear global attributes from the merging
 
-    ds = _maybe_rename_variables(ds, _CROCO_VARNAMES_MAPPING)
+    ds = _maybe_rename_variables(ds, _CROCO.varnames_mapping)
     ds = _maybe_convert_time_from_float_to_timedelta(ds)
 
     _assert_no_grid_metadata(ds)
@@ -563,14 +589,14 @@ def delft3d_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr
         stacklevel=2,
     )
 
-    coords = _pick_expected_coords(coords, _DELFT3D_X_EXPECTED_COORDS)
+    coords = _pick_expected_coords(coords, _DELFT3D_X.expected_coords)
     field_das = _normalize_fields(fields)
 
     ds = xr.merge(list(field_das.values()) + [coords], compat="override")
 
-    ds = _maybe_rename_variables(ds, _DELFT3D_X_VARNAMES_MAPPING)
-    ds = _set_coords(ds, _DELFT3D_X_AXIS_VARNAMES.keys())
-    ds = _set_axis_attrs(ds, _DELFT3D_X_AXIS_VARNAMES)
+    ds = _maybe_rename_variables(ds, _DELFT3D_X.varnames_mapping)
+    ds = _set_coords(ds, _DELFT3D_X.axis_varnames.keys())
+    ds = _set_axis_attrs(ds, _DELFT3D_X.axis_varnames)
 
     ds = _attach_sgrid_grid(
         ds,
@@ -584,11 +610,6 @@ def delft3d_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr
     )
 
     return ds
-
-
-# Known vertical dimension mappings by model
-_FESOM2_VERTICAL_DIMS = {"interface": "nz", "center": "nz1"}
-_ICON_VERTICAL_DIMS = {"interface": "depth_2", "center": "depth"}
 
 
 def _detect_vertical_coordinates(
