@@ -38,14 +38,14 @@ signature.
 | The horizontal node (corner) coordinates are named `lon` and `lat`. They sit on the node dimensions and have a `units` attribute. | Particles are located using these coordinates. Units containing `degree` give a spherical mesh; anything else gives a flat mesh. |
 | The vertical node coordinate is named `depth` and is strictly increasing (positive downward).                                     | Parcels uses `depth` for vertical search.                                                                                        |
 | A `time` coordinate of datetimes, timedeltas or `cftime` objects.                                                                 | Parcels uses it to interpolate in time and to check that the calendars of fields are compatible.                                 |
-| Velocities are named `U`, `V` and (optionally) `W`, with `W` positive in the same direction as positive depth.                                                   | Parcels auto-detects the `UV` and `UVW` vector fields from these names, which are then used in the built-in advection Kernels.   |
+| Velocities are named `U`, `V` and (optionally) `W`, with `W` positive in the same direction as positive depth.                    | Parcels auto-detects the `UV` and `UVW` vector fields from these names, which are then used in the built-in advection Kernels.   |
 
 ## SGRID in a nutshell
 
 SGRID describes a staggered grid with two kinds of points along each axis:
 
 - **nodes** are the cell corners. `lon` and `lat` must be defined here in Parcels.
-- **faces** are the cell centres. 
+- **faces** are the cell centres.
 
 A note on the terminology used in this page. An **axis** is one of the physical directions of the model grid: X, Y and (for 3D data) Z. A
 **dimension** is a named dimension of an array in the dataset (e.g. `jt` or `jq`). On a staggered grid,
