@@ -8,7 +8,7 @@ kernelspec:
 
 Parcels reads structured-grid model data through {py:func}`parcels.FieldSet.from_sgrid_conventions`. This function
 does not guess how your model grid is laid out. Instead, it reads [SGRID](https://sgrid.github.io/sgrid/) metadata
-attached to the dataset, which says which dimensions hold the cell corners, which hold the cell centres, and how
+attached to the dataset, which provides information on which dimensions hold the cell corners, which dimensions hold the cell centres, and how
 they line up. See the [Grids explanation](./explanation_grids.ipynb#nodes-edges-and-faces) for more on where data can
 sit on a grid cell.
 
@@ -38,18 +38,18 @@ signature.
 | The horizontal node (corner) coordinates are named `lon` and `lat`. They sit on the node dimensions and have a `units` attribute. | Particles are located using these coordinates. Units containing `degree` give a spherical mesh; anything else gives a flat mesh. |
 | The vertical node coordinate is named `depth` and is strictly increasing (positive downward).                                     | Parcels uses `depth` for vertical search.                                                                                        |
 | A `time` coordinate of datetimes, timedeltas or `cftime` objects.                                                                 | Parcels uses it to interpolate in time and to check that the calendars of fields are compatible.                                 |
-| Velocities are named `U`, `V` and (optionally) `W`, with `W` positive downward.                                                   | Parcels auto-detects the `UV` and `UVW` vector fields from these names, which are then used in the built-in advection Kernels.   |
+| Velocities are named `U`, `V` and (optionally) `W`, with `W` positive in the same direction as positive depth.                                                   | Parcels auto-detects the `UV` and `UVW` vector fields from these names, which are then used in the built-in advection Kernels.   |
 
 ## SGRID in a nutshell
 
 SGRID describes a staggered grid with two kinds of points along each axis:
 
-- **nodes** are the cell corners (the Arakawa "F" or "ψ" points). `lon` and `lat` must be defined here.
-- **faces** are the cell centres (the Arakawa "T" or "ρ" points).
+- **nodes** are the cell corners. `lon` and `lat` must be defined here in Parcels.
+- **faces** are the cell centres. 
 
 A note on the terminology used in this page. An **axis** is one of the physical directions of the model grid: X, Y and (for 3D data) Z. A
 **dimension** is a named dimension of an array in the dataset (e.g. `jt` or `jq`). On a staggered grid,
-variables sit at different positions along the same axis, so a single axis usually has more than one dimension.
+variables sit at different positions along the same axis (e.g. Arakawa "F" and "ψ" points align with the nodes, while Arakawa "T" and "ρ" points align with the faces), so a single axis usually has more than one dimension.
 
 SGRID keeps all fields and coordinates in a single dataset, so the dimensions along an axis must have distinct names.
 For example, the Y-node dimension might be called `jq` and the Y-face dimension `jt`. Some models instead write
