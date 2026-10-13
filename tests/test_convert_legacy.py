@@ -402,10 +402,18 @@ CASES = [
 ]
 
 
+def _apply_intentional_changes(case: Case, legacy: Outcome) -> Outcome:
+    """Apply the behaviour changes made on purpose since the legacy copy was taken to the legacy outcome."""
+    if legacy.result is not None and case.converter.endswith("_to_sgrid"):
+        # All SGRID converters now clear the global attributes and only set "Conventions"
+        legacy.result.attrs = {"Conventions": "SGRID"}
+    return legacy
+
+
 @pytest.mark.parametrize("case", [pytest.param(c, id=c.id, marks=c.marks) for c in CASES])
 def test_convert_matches_legacy(case: Case, caplog: pytest.LogCaptureFixture):
     caplog.set_level(logging.DEBUG)
-    expected = _run(_legacy_convert, case, caplog)
+    expected = _apply_intentional_changes(case, _run(_legacy_convert, case, caplog))
     actual = _run(convert, case, caplog)
 
     if case.raises is None:

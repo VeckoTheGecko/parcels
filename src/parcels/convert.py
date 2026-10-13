@@ -314,20 +314,17 @@ def _attach_sgrid_grid(
     face_dimensions: tuple[sgrid.FaceNodePadding, sgrid.FaceNodePadding],
     vertical_dimensions: tuple[sgrid.FaceNodePadding],
 ) -> xr.Dataset:
-    """Add a 'grid' variable holding the SGRID metadata of a 2D grid topology."""
+    """Add a 'grid' variable holding the SGRID metadata of a 2D grid topology, and mark the dataset as SGRID."""
     _assert_no_grid_metadata(ds)
-    ds["grid"] = xr.DataArray(
-        0,
-        attrs=sgrid.SGrid2DMetadata(
-            cf_role="grid_topology",
-            topology_dimension=2,
-            node_dimensions=node_dimensions,
-            node_coordinates=node_coordinates,
-            face_dimensions=face_dimensions,
-            vertical_dimensions=vertical_dimensions,
-        ).to_attrs(),
+    grid = sgrid.SGrid2DMetadata(
+        cf_role="grid_topology",
+        topology_dimension=2,
+        node_dimensions=node_dimensions,
+        node_coordinates=node_coordinates,
+        face_dimensions=face_dimensions,
+        vertical_dimensions=vertical_dimensions,
     )
-    return ds
+    return sgrid._attach_sgrid_metadata(ds, grid)
 
 
 def nemo_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.Dataset):
@@ -383,6 +380,8 @@ def nemo_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.Da
     # if len(coords.dims) != 2: #! This should really be looking at the dimensionality of the lons and lats arrays. Currently having 2D lon lat and 1D depth triggers this `if` clause
     #     raise ValueError("Expected coordinates to be 2 dimensional")
     ds = xr.merge(list(field_das.values()) + [coords])
+    ds.attrs.clear()  # Clear global attributes from the merging
+
     ds = _maybe_rename_variables(ds, _NEMO.varnames_mapping)
     ds = _rename_nemo_depth_dims(ds)
     ds = _nemo_maybe_expand_depth_dimension(ds)
@@ -589,6 +588,7 @@ def delft3d_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr
     field_das = _normalize_fields(fields)
 
     ds = xr.merge(list(field_das.values()) + [coords], compat="override")
+    ds.attrs.clear()  # Clear global attributes from the merging
 
     ds = _maybe_rename_variables(ds, _DELFT3D_X.varnames_mapping)
     ds = _set_coords(ds, _DELFT3D_X.axis_varnames.keys())

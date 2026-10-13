@@ -229,3 +229,17 @@ def test_convert_raises_on_existing_grid_metadata():
     coords["some_grid"] = xr.DataArray(0, attrs={"cf_role": "grid_topology"})
     with pytest.raises(ValueError, match="Dataset already has grid metadata"):
         convert.copernicusmarine_to_sgrid(fields={"U": ds["uo"], "V": ds["vo"]}, coords=coords)
+
+
+@pytest.mark.filterwarnings("ignore:The delft3d_to_sgrid function is experimental")
+def test_convert_sets_only_conventions_global_attr():
+    U = parcels.tutorial.open_dataset("NemoCurvilinear_data_zonal/U")
+    V = parcels.tutorial.open_dataset("NemoCurvilinear_data_zonal/V")
+    coords = parcels.tutorial.open_dataset("NemoCurvilinear_data_zonal/mesh_mask")
+    U.attrs["source"] = "NEMO"
+    ds = convert.nemo_to_sgrid(fields=dict(U=U, V=V), coords=coords)
+    assert ds.attrs == {"Conventions": "SGRID"}
+
+    ds = open_remote_dataset("Delft3D_data/Rotterdam_tiny")
+    ds_fset = convert.delft3d_to_sgrid(fields={"U": ds["VELU"], "V": ds["VELV"]}, coords=ds[["XZETA", "YZETA"]])
+    assert ds_fset.attrs == {"Conventions": "SGRID"}
