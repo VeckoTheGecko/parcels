@@ -279,9 +279,9 @@ def _maybe_expand_depth_dimension(ds: xr.Dataset) -> xr.Dataset:
 
 
 def _assert_no_grid_metadata(ds: xr.Dataset) -> None:
-    if "grid" in ds.cf.cf_roles:
+    if grid_vars := ds.cf.cf_roles.get("grid_topology"):
         raise ValueError(
-            "Dataset already has a 'grid' variable (according to cf_roles). Didn't expect there to be grid metadata on this dataset - please open an issue with more information about your dataset."
+            f"Dataset already has grid metadata (variables {grid_vars} have cf_role 'grid_topology'). Didn't expect there to be grid metadata on this dataset - please open an issue with more information about your dataset."
         )
 
 
@@ -315,6 +315,7 @@ def _attach_sgrid_grid(
     vertical_dimensions: tuple[sgrid.FaceNodePadding],
 ) -> xr.Dataset:
     """Add a 'grid' variable holding the SGRID metadata of a 2D grid topology."""
+    _assert_no_grid_metadata(ds)
     ds["grid"] = xr.DataArray(
         0,
         attrs=sgrid.SGrid2DMetadata(
@@ -402,7 +403,6 @@ def nemo_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.Da
 
     ds = _flip_w_to_positive_down(ds)
 
-    _assert_no_grid_metadata(ds)
     ds = _attach_sgrid_grid(
         ds,
         node_dimensions=("x", "y"),
@@ -454,7 +454,6 @@ def mitgcm_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.
     ds = _set_axis_attrs(ds, _MITGCM.axis_varnames)
     ds = _maybe_swap_depth_direction(ds)
 
-    _assert_no_grid_metadata(ds)
     ds = _attach_sgrid_grid(
         ds,
         node_dimensions=("lon", "lat"),
@@ -499,7 +498,6 @@ def croco_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.D
     ds = _maybe_rename_variables(ds, _CROCO.varnames_mapping)
     ds = _maybe_convert_time_from_float_to_timedelta(ds)
 
-    _assert_no_grid_metadata(ds)
     ds = _attach_sgrid_grid(
         ds,
         node_dimensions=("lon", "lat"),
@@ -548,7 +546,6 @@ def copernicusmarine_to_sgrid(
 
     ds = _flip_w_to_positive_down(ds)
 
-    _assert_no_grid_metadata(ds)
     # use dummy *_center dimensions - this is A grid data (all defined on nodes)
     ds = _attach_sgrid_grid(
         ds,

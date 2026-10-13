@@ -221,3 +221,11 @@ def test_convert_does_not_modify_input_w(converter):
     getattr(convert, converter)(**kwargs)
 
     xr.testing.assert_identical(W, W_before)
+
+
+def test_convert_raises_on_existing_grid_metadata():
+    ds = datasets_circulation_models["ds_copernicusmarine"]
+    coords = ds[["time", "depth", "latitude", "longitude"]]
+    coords["some_grid"] = xr.DataArray(0, attrs={"cf_role": "grid_topology"})
+    with pytest.raises(ValueError, match="Dataset already has grid metadata"):
+        convert.copernicusmarine_to_sgrid(fields={"U": ds["uo"], "V": ds["vo"]}, coords=coords)

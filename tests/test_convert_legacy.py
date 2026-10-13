@@ -270,13 +270,6 @@ def _copernicus_with_coords() -> Inputs:
     return _kw(fields={"U": ds["uo"], "V": ds["vo"]}, coords=ds[["time", "depth", "latitude", "longitude"]])
 
 
-def _copernicus_existing_grid() -> Inputs:
-    ds = _synthetic("ds_copernicusmarine")
-    coords = ds[["time", "depth", "latitude", "longitude"]]
-    coords["some_grid"] = xr.DataArray(0, attrs={"cf_role": "grid_topology"})
-    return _kw(fields={"U": ds["uo"], "V": ds["vo"]}, coords=coords)
-
-
 def _copernicus_two_x_coords() -> Inputs:
     ds = _synthetic("ds_copernicusmarine")
     ds = ds.assign_coords(longitude2=ds["longitude"])
@@ -369,9 +362,6 @@ CASES = [
     Case("copernicus-no-depth", "copernicusmarine_to_sgrid", _copernicus_no_depth),
     Case("copernicus-datasets", "copernicusmarine_to_sgrid", _copernicus_datasets),
     Case("copernicus-with-coords", "copernicusmarine_to_sgrid", _copernicus_with_coords),
-    # BUG: `_assert_no_grid_metadata` checks for a "grid" key in `ds.cf.cf_roles`, but that mapping is keyed by
-    # the cf_role value (e.g. "grid_topology"), so existing grid metadata is never detected.
-    Case("copernicus-existing-grid", "copernicusmarine_to_sgrid", _copernicus_existing_grid),
     Case("copernicus-two-x-coords", "copernicusmarine_to_sgrid", _copernicus_two_x_coords, raises=ValueError),
     # Delft3D
     Case("delft3d-dataarrays", "delft3d_to_sgrid", _delft3d_dataarrays),
