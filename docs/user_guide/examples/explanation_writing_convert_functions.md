@@ -208,7 +208,7 @@ def toyocean_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: x
 
     # 5. Attach the SGRID metadata
     ds["grid"] = xr.DataArray(
-        0,
+        0, # The value here doesn't matter - so we put 0. The attributes are the important aspect
         attrs={
             "cf_role": "grid_topology",
             "topology_dimension": 2,
