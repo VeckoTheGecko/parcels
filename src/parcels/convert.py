@@ -260,6 +260,51 @@ def _assert_no_grid_metadata(ds: xr.Dataset) -> None:
         )
 
 
+def _normalize_fields(fields: dict[str, xr.Dataset | xr.DataArray]) -> dict[str, xr.DataArray]:
+    """Return each field as a DataArray named after its key in ``fields``."""
+    normalized = {}
+    for name, field in fields.items():
+        if isinstance(field, xr.Dataset):
+            # Convenience for model output with one dataset per grid (e.g., NEMO's U and V files) where the
+            # variable already has the Parcels name: {"U": ds_u} selects ds_u["U"]. Other variables are dropped.
+            normalized[name] = field[name]
+            # TODO: logging message, warn if multiple fields are in this dataset
+        else:
+            normalized[name] = field.rename(name)
+    return normalized
+
+
+def _flip_w_to_positive_down(ds: xr.Dataset) -> xr.Dataset:
+    """Negate W to convert from up positive to down positive (as that's the direction of positive z)."""
+    if "W" in ds.data_vars:
+        # TODO: This modifies the caller's data in place (see test_convert_does_not_modify_input_w)
+        ds["W"].data *= -1
+    return ds
+
+
+def _attach_sgrid_grid(
+    ds: xr.Dataset,
+    *,
+    node_dimensions: tuple[str, str],
+    node_coordinates: tuple[str, str],
+    face_dimensions: tuple[sgrid.FaceNodePadding, sgrid.FaceNodePadding],
+    vertical_dimensions: tuple[sgrid.FaceNodePadding],
+) -> xr.Dataset:
+    """Add a 'grid' variable holding the SGRID metadata of a 2D grid topology."""
+    ds["grid"] = xr.DataArray(
+        0,
+        attrs=sgrid.SGrid2DMetadata(
+            cf_role="grid_topology",
+            topology_dimension=2,
+            node_dimensions=node_dimensions,
+            node_coordinates=node_coordinates,
+            face_dimensions=face_dimensions,
+            vertical_dimensions=vertical_dimensions,
+        ).to_attrs(),
+    )
+    return ds
+
+
 def nemo_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.Dataset):
     """Create an sgrid-compliant xarray.Dataset from a dataset of NEMO netcdf files.
 
@@ -284,16 +329,10 @@ def nemo_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.Da
     If you encounter issues with your specific NEMO dataset, please open an issue on the Parcels GitHub repository with details about your dataset.
 
     """
-    fields = fields.copy()
     coords = _pick_expected_coords(coords, _NEMO_EXPECTED_COORDS)
+    field_das = _normalize_fields(fields)
 
-    for name, field_da in fields.items():
-        if isinstance(field_da, xr.Dataset):
-            field_da = field_da[name]
-            # TODO: logging message, warn if multiple fields are in this dataset
-        else:
-            field_da = field_da.rename(name)
-
+    for name, field_da in field_das.items():
         match name:
             case "U":
                 field_da = field_da.rename({"y": "y_center"})
@@ -302,7 +341,7 @@ def nemo_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.Da
             case _:
                 pass
         field_da = field_da.reset_coords(drop=True)
-        fields[name] = field_da
+        field_das[name] = field_da
 
     if "time" in coords.dims:
         if coords.sizes["time"] != 1:
@@ -318,7 +357,7 @@ def nemo_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.Da
                 coords = coords.isel({dim: 0})
     # if len(coords.dims) != 2: #! This should really be looking at the dimensionality of the lons and lats arrays. Currently having 2D lon lat and 1D depth triggers this `if` clause
     #     raise ValueError("Expected coordinates to be 2 dimensional")
-    ds = xr.merge(list(fields.values()) + [coords])
+    ds = xr.merge(list(field_das.values()) + [coords])
     ds = _maybe_rename_variables(ds, _NEMO_VARNAMES_MAPPING)
     ds = _maybe_bring_other_depths_to_depth(ds)
     ds = _drop_unused_dimensions_and_coords(ds, _NEMO_DIMENSION_COORD_NAMES)
@@ -336,24 +375,18 @@ def nemo_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.Da
             "HINT: Add xarray metadata attribute 'axis' to dimension - e.g., ds['lat'].attrs['axis'] = 'Y'"
         )
 
-    if "W" in ds.data_vars:
-        # Negate W to convert from up positive to down positive (as that's the direction of positive z)
-        ds["W"].data *= -1
+    ds = _flip_w_to_positive_down(ds)
 
     _assert_no_grid_metadata(ds)
-    ds["grid"] = xr.DataArray(
-        0,
-        attrs=sgrid.SGrid2DMetadata(
-            cf_role="grid_topology",
-            topology_dimension=2,
-            node_dimensions=("x", "y"),
-            node_coordinates=("glamf", "gphif"),
-            face_dimensions=(
-                sgrid.FaceNodePadding("x_center", "x", sgrid.Padding.LOW),
-                sgrid.FaceNodePadding("y_center", "y", sgrid.Padding.LOW),
-            ),
-            vertical_dimensions=(sgrid.FaceNodePadding("depth_center", "depth", sgrid.Padding.HIGH),),
-        ).to_attrs(),
+    ds = _attach_sgrid_grid(
+        ds,
+        node_dimensions=("x", "y"),
+        node_coordinates=("glamf", "gphif"),
+        face_dimensions=(
+            sgrid.FaceNodePadding("x_center", "x", sgrid.Padding.LOW),
+            sgrid.FaceNodePadding("y_center", "y", sgrid.Padding.LOW),
+        ),
+        vertical_dimensions=(sgrid.FaceNodePadding("depth_center", "depth", sgrid.Padding.HIGH),),
     )
 
     # NEMO models are always in degrees
@@ -385,19 +418,11 @@ def mitgcm_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.
     See the MITgcm tutorial for more information on how to use MITgcm model outputs in Parcels
 
     """
-    fields = fields.copy()
-
-    for name, field_da in fields.items():
-        if isinstance(field_da, xr.Dataset):
-            field_da = field_da[name]
-            # TODO: logging message, warn if multiple fields are in this dataset
-        else:
-            field_da = field_da.rename(name)
-        fields[name] = field_da
+    field_das = _normalize_fields(fields)
 
     coords = _pick_expected_coords(coords, _MITGCM_EXPECTED_COORDS)
 
-    ds = xr.merge(list(fields.values()) + [coords], compat="override")
+    ds = xr.merge(list(field_das.values()) + [coords], compat="override")
     ds.attrs.clear()  # Clear global attributes from the merging
 
     ds = _maybe_rename_variables(ds, _MITGCM_VARNAMES_MAPPING)
@@ -405,19 +430,15 @@ def mitgcm_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.
     ds = _maybe_swap_depth_direction(ds)
 
     _assert_no_grid_metadata(ds)
-    ds["grid"] = xr.DataArray(
-        0,
-        attrs=sgrid.SGrid2DMetadata(
-            cf_role="grid_topology",
-            topology_dimension=2,
-            node_dimensions=("lon", "lat"),
-            node_coordinates=("lon", "lat"),
-            face_dimensions=(
-                sgrid.FaceNodePadding("XC", "lon", sgrid.Padding.HIGH),
-                sgrid.FaceNodePadding("YC", "lat", sgrid.Padding.HIGH),
-            ),
-            vertical_dimensions=(sgrid.FaceNodePadding("depth", "depth", sgrid.Padding.HIGH),),
-        ).to_attrs(),
+    ds = _attach_sgrid_grid(
+        ds,
+        node_dimensions=("lon", "lat"),
+        node_coordinates=("lon", "lat"),
+        face_dimensions=(
+            sgrid.FaceNodePadding("XC", "lon", sgrid.Padding.HIGH),
+            sgrid.FaceNodePadding("YC", "lat", sgrid.Padding.HIGH),
+        ),
+        vertical_dimensions=(sgrid.FaceNodePadding("depth", "depth", sgrid.Padding.HIGH),),
     )
 
     return ds
@@ -443,38 +464,26 @@ def croco_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr.D
     See the CROCO 3D tutorial for more information on how to use CROCO model outputs in Parcels
 
     """
-    fields = fields.copy()
-
-    for name, field_da in fields.items():
-        if isinstance(field_da, xr.Dataset):
-            field_da = field_da[name]
-            # TODO: logging message, warn if multiple fields are in this dataset
-        else:
-            field_da = field_da.rename(name)
-        fields[name] = field_da
+    field_das = _normalize_fields(fields)
 
     coords = _pick_expected_coords(coords, _CROCO_EXPECTED_COORDS)
 
-    ds = xr.merge(list(fields.values()) + [coords])
+    ds = xr.merge(list(field_das.values()) + [coords])
     ds.attrs.clear()  # Clear global attributes from the merging
 
     ds = _maybe_rename_variables(ds, _CROCO_VARNAMES_MAPPING)
     ds = _maybe_convert_time_from_float_to_timedelta(ds)
 
     _assert_no_grid_metadata(ds)
-    ds["grid"] = xr.DataArray(
-        0,
-        attrs=sgrid.SGrid2DMetadata(
-            cf_role="grid_topology",
-            topology_dimension=2,
-            node_dimensions=("lon", "lat"),
-            node_coordinates=("lon", "lat"),
-            face_dimensions=(
-                sgrid.FaceNodePadding("xi_u", "xi_rho", sgrid.Padding.HIGH),
-                sgrid.FaceNodePadding("eta_v", "eta_rho", sgrid.Padding.HIGH),
-            ),
-            vertical_dimensions=(sgrid.FaceNodePadding("s_rho", "depth", sgrid.Padding.HIGH),),
-        ).to_attrs(),
+    ds = _attach_sgrid_grid(
+        ds,
+        node_dimensions=("lon", "lat"),
+        node_coordinates=("lon", "lat"),
+        face_dimensions=(
+            sgrid.FaceNodePadding("xi_u", "xi_rho", sgrid.Padding.HIGH),
+            sgrid.FaceNodePadding("eta_v", "eta_rho", sgrid.Padding.HIGH),
+        ),
+        vertical_dimensions=(sgrid.FaceNodePadding("s_rho", "depth", sgrid.Padding.HIGH),),
     )
 
     return ds
@@ -504,40 +513,27 @@ def copernicusmarine_to_sgrid(
     You can use indexing and slicing to select a subset of the data before passing it to this function.
 
     """
-    fields = fields.copy()
+    field_das = _normalize_fields(fields)
 
-    for name, field_da in fields.items():
-        if isinstance(field_da, xr.Dataset):
-            field_da = field_da[name]
-            # TODO: logging message, warn if multiple fields are in this dataset
-        else:
-            field_da = field_da.rename(name)
-        fields[name] = field_da
-
-    ds = xr.merge(list(fields.values()) + ([coords] if coords is not None else []))
+    ds = xr.merge(list(field_das.values()) + ([coords] if coords is not None else []))
     ds.attrs.clear()  # Clear global attributes from the merging
 
     ds = _maybe_rename_coords(ds, _COPERNICUS_MARINE_AXIS_VARNAMES)
     ds = _maybe_expand_depth_dimension(ds)
 
-    if "W" in ds.data_vars:
-        # Negate W to convert from up positive to down positive (as that's the direction of positive z)
-        ds["W"].data *= -1
+    ds = _flip_w_to_positive_down(ds)
 
     _assert_no_grid_metadata(ds)
-    ds["grid"] = xr.DataArray(
-        0,
-        attrs=sgrid.SGrid2DMetadata(  # use dummy *_center dimensions - this is A grid data (all defined on nodes)
-            cf_role="grid_topology",
-            topology_dimension=2,
-            node_dimensions=("lon", "lat"),
-            node_coordinates=("lon", "lat"),
-            face_dimensions=(
-                sgrid.FaceNodePadding("x_center", "lon", sgrid.Padding.LOW),
-                sgrid.FaceNodePadding("y_center", "lat", sgrid.Padding.LOW),
-            ),
-            vertical_dimensions=(sgrid.FaceNodePadding("depth_center", "depth", sgrid.Padding.LOW),),
-        ).to_attrs(),
+    # use dummy *_center dimensions - this is A grid data (all defined on nodes)
+    ds = _attach_sgrid_grid(
+        ds,
+        node_dimensions=("lon", "lat"),
+        node_coordinates=("lon", "lat"),
+        face_dimensions=(
+            sgrid.FaceNodePadding("x_center", "lon", sgrid.Padding.LOW),
+            sgrid.FaceNodePadding("y_center", "lat", sgrid.Padding.LOW),
+        ),
+        vertical_dimensions=(sgrid.FaceNodePadding("depth_center", "depth", sgrid.Padding.LOW),),
     )
 
     return ds
@@ -567,36 +563,24 @@ def delft3d_to_sgrid(*, fields: dict[str, xr.Dataset | xr.DataArray], coords: xr
         stacklevel=2,
     )
 
-    fields = fields.copy()
     coords = _pick_expected_coords(coords, _DELFT3D_X_EXPECTED_COORDS)
+    field_das = _normalize_fields(fields)
 
-    for name, field_da in fields.items():
-        if isinstance(field_da, xr.Dataset):
-            field_da = field_da[name]
-            # TODO: logging message, warn if multiple fields are in this dataset
-        else:
-            field_da = field_da.rename(name)
-        fields[name] = field_da
-
-    ds = xr.merge(list(fields.values()) + [coords], compat="override")
+    ds = xr.merge(list(field_das.values()) + [coords], compat="override")
 
     ds = _maybe_rename_variables(ds, _DELFT3D_X_VARNAMES_MAPPING)
     ds = _set_coords(ds, _DELFT3D_X_AXIS_VARNAMES.keys())
     ds = _set_axis_attrs(ds, _DELFT3D_X_AXIS_VARNAMES)
 
-    ds["grid"] = xr.DataArray(
-        0,
-        attrs=sgrid.SGrid2DMetadata(
-            cf_role="grid_topology",
-            topology_dimension=2,
-            node_dimensions=("M", "N"),
-            node_coordinates=("lon", "lat"),
-            face_dimensions=(
-                sgrid.FaceNodePadding("X", "M", sgrid.Padding.LOW),
-                sgrid.FaceNodePadding("Y", "N", sgrid.Padding.LOW),
-            ),
-            vertical_dimensions=(sgrid.FaceNodePadding("Z", "LAYER", sgrid.Padding.HIGH),),
-        ).to_attrs(),
+    ds = _attach_sgrid_grid(
+        ds,
+        node_dimensions=("M", "N"),
+        node_coordinates=("lon", "lat"),
+        face_dimensions=(
+            sgrid.FaceNodePadding("X", "M", sgrid.Padding.LOW),
+            sgrid.FaceNodePadding("Y", "N", sgrid.Padding.LOW),
+        ),
+        vertical_dimensions=(sgrid.FaceNodePadding("Z", "LAYER", sgrid.Padding.HIGH),),
     )
 
     return ds
