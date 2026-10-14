@@ -243,7 +243,7 @@ The SGRID metadata can be read back through the `ds.sgrid` accessor. Calling `de
 the grid layout:
 
 ```{code-cell}
-print(ds.sgrid.metadata.describe())
+ds.sgrid.metadata.describe()
 ```
 
 Go through the output and compare it with your table from Step 1:
@@ -364,7 +364,7 @@ Then check the result:
 
 ```python
 ds = mymodel_to_sgrid(fields={...}, coords=...)
-print(ds.sgrid.metadata.describe())
+ds.sgrid.metadata.describe()
 fieldset = parcels.FieldSet.from_sgrid_conventions(ds)
 fieldset.describe()
 ```
