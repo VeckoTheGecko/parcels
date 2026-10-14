@@ -17,14 +17,89 @@ Note when conducting research we highly recommend documenting which version of P
 - In v4.0.0 of Parcels, adopted EffVer which formalises this "SemVer-like" variant we were following - and we adjusted our deprecation policy.
 - In [v3.1.0](https://docs.parcels-code.org/en/v3.1.0/community/policies.html) of Parcels, we adopted SemVer-like versioning and deprecation policies
 
-## Use of AI in development
+## AI usage policy
 
-Many developers use AI Large Language Models to help them in their work. These LLMs have received both praise and criticism when it comes to software development.
+**Note:** Some Parcels developers use AI tools as part of our development workflow.
+We assume this is now common. Tools, patterns, and norms are evolving fast — this
+policy aims to avoid restricting contributors' choice of tooling while ensuring that:
 
-We accept that Parcels developers have their own motivation for using (or not using) AI. However, we have one policy that we expect all Parcels developers to follow:
+- Reviewers are not overburdened
+- Contributions can be maintained
+- The submitter can vouch for and explain all changes
+- Developers can acquire new skills[^1]
 
-> It is ultimately your responsibility to understand the code that you commit.
+To that end this policy applies regardless of whether the code was written by hand, with
+AI assistance, or generated entirely by an AI tool.
 
-Remember that reviews are done by human maintainers - asking us to review code that an AI wrote but you don't understand isn't kind to these maintainers.
+[^1]:
+    Over-reliance on AI tools has been shown to
+    [hinder skill formation amongst software developers](https://arxiv.org/abs/2601.20245).
 
-The [CLAUDE.md](https://github.com/Parcels-code/Parcels/blob/HEAD/CLAUDE.md) file in the repository has additional instructions for AI agents to follow when contributing to Parcels.
+### Core principle: changes
+
+If you submit a pull request, you are responsible for understanding and having fully reviewed
+the changes. You must be able to explain why each change is correct[^2] and how it fits into
+the project. Strive to minimize changes to ease the burden on reviewers — avoid
+including unnecessary or loosely related changes.
+
+[^2]:
+    You may also open a draft PR with changes in order to discuss and receive feedback on the
+    best approach if you are not sure what the best way forward is.
+
+### Core principle: communication
+
+PR descriptions, issue comments, and review responses must be your own words. The
+substance and reasoning must come from you. Do not paste AI-generated text as
+comments or review responses. Please attempt to be concise.
+
+PR descriptions should follow the provided template.
+
+Using AI to improve the language of your writing (grammar, phrasing, spelling, etc.) is
+acceptable. Be careful that it does not introduce inaccurate details in the process.
+
+Maintainers reserve the right to delete or hide comments that violate our AI policy or code of conduct.
+
+### Code and tests
+
+#### Review every line
+
+You must have personally reviewed and understood all changes before submitting.
+
+If you used AI to generate code, you are expected to have read it critically and
+tested it. As with a hand-written PR, the description should explain the approach
+and reasoning behind the changes. Do not leave it to reviewers to figure out what
+the code does and why.
+
+##### Not acceptable
+
+> I pointed an agent at the issue and here are the changes
+
+> This is what Claude came up with. 🤷
+
+##### Acceptable
+
+> I iterated multiple times with an agent to produce this. The agent wrote the code at my direction,
+> and I have fully read and validated the changes.
+
+> I pointed an agent at the issue and it generated a first draft. I reviewed the changes thoroughly and understand the implementation well.
+
+#### Large AI-assisted contributions
+
+Generating code with agents is fast and easy. Reviewing it is not. Making a PR with a large diff
+shifts the burden from the contributor to the reviewer. To guard against this asymmetry:
+
+If you are planning a large AI-assisted contribution (e.g., a significant refactor, a
+framework migration, or a new subsystem), **open an issue first** to discuss the scope
+and approach with maintainers. This helps us decide if the change is worthwhile, how
+it should be structured, and any other important decisions.
+
+Maintainers reserve the right to close PRs where the scope makes meaningful review
+impractical, or when they suspect this policy has been violated. Similarly they may request
+that large changes be broken into smaller, reviewable pieces.
+
+### Documentation
+
+The same core principles apply to both code and documentation. You must review the result
+for accuracy and are ultimately responsible for all changes made. Parcels has domain-specific
+semantics that AI tools frequently get wrong. Do not submit documentation that you
+haven't carefully read and verified.
