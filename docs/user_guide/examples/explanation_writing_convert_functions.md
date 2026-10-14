@@ -40,7 +40,6 @@ signature.
 | The vertical node coordinate is named `depth` and is strictly increasing.                                                         | Parcels uses `depth` for vertical search.                                                                                        |
 | A `time` coordinate of datetimes, timedeltas or `cftime` objects.                                                                 | Parcels uses it to interpolate in time and to check that the calendars of fields are compatible.                                 |
 | Velocities are named `U`, `V` and (optionally) `W`, with `W` positive in the same direction as positive depth.                    | Parcels auto-detects the `UV` and `UVW` vector fields from these names, which are then used in the built-in advection Kernels.   |
-| Velocities are named `U`, `V` and (optionally) `W`, with `W` positive downward.                                                   | Parcels auto-detects the `UV` and `UVW` vector fields from these names, which are then used in the built-in advection Kernels.   |
 
 ## SGRID in a nutshell
 
