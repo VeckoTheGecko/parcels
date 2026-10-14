@@ -31,6 +31,10 @@ policy aims to avoid restricting contributors' choice of tooling while ensuring 
 To that end this policy applies regardless of whether the code was written by hand, with
 AI assistance, or generated entirely by an AI tool.
 
+```{important}
+Parcels developers reserve the right to close pull requests for whatever reason (e.g., being low quality, being "drive-by" PRs, or for violating this policy).
+```
+
 [^1]:
     Over-reliance on AI tools has been shown to
     [hinder skill formation amongst software developers](https://arxiv.org/abs/2601.20245).
