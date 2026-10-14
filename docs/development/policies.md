@@ -1,17 +1,5 @@
 # Policies
 
-## Use of AI in development
-
-Many developers use AI Large Language Models to help them in their work. These LLMs have received both praise and criticism when it comes to software development.
-
-We accept that Parcels developers have their own motivation for using (or not using) AI. However, we have one policy that we expect all Parcels developers to follow:
-
-> It is ultimately your responsibility to understand the code that you commit.
-
-Remember that reviews are done by human maintainers - asking us to review code that an AI wrote but you don't understand isn't kind to these maintainers.
-
-The [CLAUDE.md](https://github.com/Parcels-code/Parcels/blob/HEAD/CLAUDE.md) file in the repository has additional instructions for AI agents to follow when contributing to Parcels.
-
 ## Versioning
 
 Parcels follows [Intended Effort Versioning (EffVer)](https://jacobtomlinson.dev/effver/), where the version number (e.g., v2.1.0) is thought of as `MACRO.MESO.MICRO`.
@@ -28,3 +16,15 @@ Note when conducting research we highly recommend documenting which version of P
 
 - In v4.0.0 of Parcels, adopted EffVer which formalises this "SemVer-like" variant we were following - and we adjusted our deprecation policy.
 - In [v3.1.0](https://docs.parcels-code.org/en/v3.1.0/community/policies.html) of Parcels, we adopted SemVer-like versioning and deprecation policies
+
+## Use of AI in development
+
+Many developers use AI Large Language Models to help them in their work. These LLMs have received both praise and criticism when it comes to software development.
+
+We accept that Parcels developers have their own motivation for using (or not using) AI. However, we have one policy that we expect all Parcels developers to follow:
+
+> It is ultimately your responsibility to understand the code that you commit.
+
+Remember that reviews are done by human maintainers - asking us to review code that an AI wrote but you don't understand isn't kind to these maintainers.
+
+The [CLAUDE.md](https://github.com/Parcels-code/Parcels/blob/HEAD/CLAUDE.md) file in the repository has additional instructions for AI agents to follow when contributing to Parcels.
