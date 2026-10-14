@@ -24,7 +24,7 @@ When making backward incompatible changes, we will make sure these changes and i
 
 Note when conducting research we highly recommend documenting which version of Parcels (and other packages) you are using. This can be as easy as doing `conda env export > environment.yml` alongside your project code. The Parcels version used to generate an output file is also stored as metadata entry in the `.parquet` output file.
 
-## Changes in policies
+### Changes in versioning policies
 
 - In v4.0.0 of Parcels, adopted EffVer which formalises this "SemVer-like" variant we were following - and we adjusted our deprecation policy.
 - In [v3.1.0](https://docs.parcels-code.org/en/v3.1.0/community/policies.html) of Parcels, we adopted SemVer-like versioning and deprecation policies
