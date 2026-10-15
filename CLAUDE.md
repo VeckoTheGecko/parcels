@@ -6,3 +6,4 @@
   explicitly instructed
 - Never post "update" messages, progress reports, or explanatory comments on
   GitHub issues/PRs unless specifically instructed
+- Avoid adding co-authorship trailers for LLM agents to commits.
