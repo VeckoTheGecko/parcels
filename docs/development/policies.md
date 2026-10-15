@@ -19,7 +19,7 @@ Note when conducting research we highly recommend documenting which version of P
 
 ## AI usage policy
 
-**Note:** Some Parcels developers use AI tools as part of our development workflow.
+**Note:** Some Parcels developers use AI tools as part of their development workflow.
 We assume this is now common. Tools, patterns, and norms are evolving fast — this
 policy aims to avoid restricting contributors' choice of tooling while ensuring that:
 
@@ -70,7 +70,7 @@ Maintainers reserve the right to delete or hide comments that violate our AI pol
 You must have personally reviewed and understood all changes before submitting.
 
 If you used AI to generate code, you are expected to have read it critically and
-tested it. As with a hand-written PR, the description should explain the approach
+tested it. As with the (hand-written) PR, the description should explain the approach
 and reasoning behind the changes. Do not leave it to reviewers to figure out what
 the code does and why.
 
