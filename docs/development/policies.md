@@ -19,6 +19,8 @@ Note when conducting research we highly recommend documenting which version of P
 
 ## AI usage policy
 
+_This policy has been adapted from Xarray's AI policy._
+
 **Note:** Some Parcels developers use AI tools as part of their development workflow.
 We assume this is now common. Tools, patterns, and norms are evolving fast — this
 policy aims to avoid restricting contributors' choice of tooling while ensuring that:
