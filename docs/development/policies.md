@@ -31,10 +31,6 @@ policy aims to avoid restricting contributors' choice of tooling while ensuring 
 To that end this policy applies regardless of whether the code was written by hand, with
 AI assistance, or generated entirely by an AI tool.
 
-```{important}
-Parcels developers reserve the right to close pull requests for whatever reason (e.g., being low quality, being "drive-by" PRs, or for violating this policy).
-```
-
 [^1]:
     Over-reliance on AI tools has been shown to
     [hinder skill formation amongst software developers](https://arxiv.org/abs/2601.20245).
@@ -97,9 +93,14 @@ framework migration, or a new subsystem), **open an issue first** to discuss the
 and approach with maintainers. This helps us decide if the change is worthwhile, how
 it should be structured, and any other important decisions.
 
-Maintainers reserve the right to close PRs where the scope makes meaningful review
-impractical, or when they suspect this policy has been violated. Similarly they may request
+```{important}
+Maintainers reserve the right to close PRs for whatever reason.
+This could be because where the scope makes meaningful review
+impractical, when they suspect this policy has been violated, or
+if the PR is a "drive-by PR" and takes more energy to review than to work on seperately.
+Similarly they may request
 that large changes be broken into smaller, reviewable pieces.
+```
 
 ### Documentation
 
