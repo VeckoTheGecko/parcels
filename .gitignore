@@ -38,3 +38,6 @@ src/parcels/_version_setup.py
 # be required to support that - see https://github.com/pydata/xarray/issues/10732#issuecomment-3327780806
 # for more details)
 pixi.lock
+
+# Temporary notebook created by `pixi run docs-run-notebook`
+_tmp_notebook.ipynb
