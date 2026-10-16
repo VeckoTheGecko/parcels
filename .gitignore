@@ -40,4 +40,4 @@ src/parcels/_version_setup.py
 pixi.lock
 
 # Temporary notebook created by `pixi run docs-run-notebook`
-_tmp_notebook.ipynb
+/tmp/

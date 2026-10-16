@@ -140,7 +140,7 @@ docs-clean = { depends-on = [
 docs-watch = { cmd = "make livehtml", cwd = "docs", description = "Build and auto-rebuild the documentation on changes.", depends-on = [
   "docs-only-clean",
 ] }
-docs-run-notebook = { cmd = "mystnb-to-jupyter --overwrite {{ file }} _tmp_notebook.ipynb && jupyter execute _tmp_notebook.ipynb && rm _tmp_notebook.ipynb", args = [
+docs-run-notebook = { cmd = "rm -rf tmp && mkdir tmp && mystnb-to-jupyter --overwrite {{ file }} tmp/notebook.ipynb && cd tmp && jupyter execute notebook.ipynb && cd .. && rm -rf tmp && echo 'Notebook passed!'", args = [
   "file",
 ], description = "Execute a single MyST notebook (.md) or Jupyter notebook (.ipynb) outside of the docs build." }
 docs-linkcheck ={ cmd = "make linkcheck", cwd = "docs", description = "Verify all links in documentation don't 404." }
