@@ -24,6 +24,7 @@ from parcels._core.xgrid import (
 )
 from parcels._logger import logger
 from parcels._python import NOTSET, NotSetType
+from parcels._sgrid.accessor import assert_metadata_ds_consistency
 from parcels.interpolators import (
     CGrid_Velocity,
     Ux_Velocity,
@@ -256,6 +257,8 @@ class StructuredModelData(ModelData):
         #     ds["lon"] = ds[node_dimensions[0]]
         #     ds["lat"] = ds[node_dimensions[1]]
 
+        assert_metadata_ds_consistency(ds, ds.sgrid.metadata)
+
         vector_fields = resolve_vector_fields(ds, vector_fields)
         assert_valid_vector_fields(ds, vector_fields)
 
@@ -349,6 +352,9 @@ class UnstructuredModelData(ModelData):
 
         if not isinstance(grid, UxGrid):
             raise ValueError(f"Expected `grid` to be a Parcels UxGrid object. Got {type(grid)}.")
+
+        if grid.z.ndim == 3 and not grid.z["time"].equals(data["time"]):
+            raise ValueError("A time-varying (3D) z must have the same time coordinate as `data`.")
 
         self.data = data
         self.grid = grid

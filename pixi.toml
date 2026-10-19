@@ -28,7 +28,7 @@ cftime = ">=1.6.3"
 dask = ">=2025.7.0"
 holoviews = ">=1.22.0" # https://github.com/prefix-dev/rattler-build/issues/2326
 netcdf4 = ">=1.6.0"
-numpy = ">=2.2.0"
+numpy = ">=2.3.0"
 pandas = ">=2.3"
 polars = ">=1.32.0"
 pooch = ">=1.8.0"
@@ -49,7 +49,7 @@ cf_xarray = "0.10.*"
 cftime = "1.6.*"
 dask = "2025.7.*"
 netcdf4 = "1.6.*"
-numpy = "2.2.*"
+numpy = "2.3.*"
 pandas = "2.3.*"
 polars = "1.32.*"
 pooch = "1.8.*"
@@ -87,11 +87,11 @@ tests-notebooks = { cmd = "pytest --nbval-lax docs/user_guide/examples", descrip
 
 [feature.notebooks.dependencies]
 jupyter = "*"
-trajan = "*"
 matplotlib-base = ">=2.0.2"
 gsw = "*"
 py-triangle = "*"
-cmocean = ">=4.0.3,<5"
+cmocean = "*"
+cartopy = "*"
 
 [feature.devtools.dependencies]
 pdbpp = "*"
@@ -140,6 +140,9 @@ docs-clean = { depends-on = [
 docs-watch = { cmd = "make livehtml", cwd = "docs", description = "Build and auto-rebuild the documentation on changes.", depends-on = [
   "docs-only-clean",
 ] }
+docs-run-notebook = { cmd = "rm -rf tmp-docs-run-notebook && mkdir tmp-docs-run-notebook && mystnb-to-jupyter --overwrite {{ file }} tmp-docs-run-notebook/notebook.ipynb && cd tmp-docs-run-notebook && jupyter execute --inplace notebook.ipynb && cd .. && echo 'Notebook passed! See the rendered output in the `tmp-docs-run-notebook/notebook.ipynb`.'", args = [
+  "file",
+], description = "Execute a single MyST notebook (.md) or Jupyter notebook (.ipynb) outside of the docs build." }
 docs-linkcheck = { cmd = "make linkcheck", cwd = "docs", description = "Verify all links in documentation don't 404." }
 docs-spelling = { cmd = "python tools/lint_british_english.py docs/user_guide/examples/tutorial*.ipynb docs/user_guide/examples/tutorial*.md docs/user_guide/getting_started/tutorial*.ipynb docs/user_guide/getting_started/tutorial*.md", description = "Check tutorial prose uses British English." }
 more-qaqc = { depends-on = [
@@ -178,7 +181,9 @@ default = { features = [
   "numpydoc",
   "devtools",
 ], solve-group = "main" }
-test = { features = ["test"], solve-group = "main" }
+test = { features = [
+  "test",
+], solve-group = "main" } # resolves to the latest Python
 test-min-versions = { features = ["test", "min-versions"] }
 test-py311 = { features = ["test", "py311"] }
 test-py313 = { features = ["test", "py313"] }
