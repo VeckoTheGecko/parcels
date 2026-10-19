@@ -164,9 +164,6 @@ warn_unused_ignores = true
 
 exclude = [
   # Temporarily exclude files. As we improve typechecking across the codebase, remove these
-  "src/parcels/_core/utils/time.py",
-  "src/parcels/_core/utils/interpolation.py",
-  "src/parcels/_core/utils/unstructured.py",
   "src/parcels/_core/particle.py",
   "src/parcels/_core/kernel.py",
   "src/parcels/_core/particleset.py",
@@ -174,12 +171,10 @@ exclude = [
   "src/parcels/_core/particlefile.py",
   "src/parcels/_core/uxgrid.py",
   "src/parcels/_core/spatialhash.py",
-  "src/parcels/_core/particlesetview.py",
   "src/parcels/_core/fieldset.py",
   "src/parcels/_core/index_search.py",
   "src/parcels/interpolators/_xinterpolators.py",
   "src/parcels/interpolators/_uxinterpolators.py",
-  "src/parcels/kernels/_sigmagrids.py",
   "src/parcels/kernels/_advectiondiffusion.py",
   "src/parcels/kernels/_advection.py",
 ]
