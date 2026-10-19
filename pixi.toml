@@ -26,7 +26,6 @@ python = ">=3.11"
 cf_xarray = ">=0.10.0"
 cftime = ">=1.6.3"
 dask = ">=2025.7.0"
-holoviews = ">=1.22.0" # https://github.com/prefix-dev/rattler-build/issues/2326
 netcdf4 = ">=1.6.0"
 numpy = ">=2.3.0"
 pandas = ">=2.3"
