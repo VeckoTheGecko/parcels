@@ -15,9 +15,11 @@ from parcels import ParticleFile, ParticleSet, convert
 from parcels._core.fieldset import FieldSet, IncompatibleMeshesException, _datetime_to_msg
 from parcels._core.mesh import SphericalMesh
 from parcels._core.model import _default_vector_field_components
+from parcels._datasets.structured.generated import simple_UV_sigma_dataset
 from parcels._datasets.structured.generic import datasets as datasets_structured
 from parcels._datasets.structured.generic import datasets_sgrid
 from parcels._datasets.unstructured.generic import datasets as datasets_unstructured
+from parcels._sgrid.accessor import SGridDatasetInconsistency
 
 ds = datasets_structured["ds_2d_left"]
 
@@ -343,6 +345,16 @@ def test_fieldset_from_sgrid_conventions(ds_name):
     assert len(fieldset.fields) > 0
 
 
+@pytest.mark.parametrize("face_dim", ["face_dimension1", "face_dimension2", "vertical_dimensions_dim2"])
+def test_fieldset_from_sgrid_conventions_inconsistent_padding(face_dim):
+    # HIGH padding requires face and node dimensions to be the same size
+    ds = datasets_sgrid["ds_2d_padded_high"]
+    ds = ds.isel({face_dim: slice(1, None)})  # plain xarray isel, so face dim is one shorter than the node dim
+
+    with pytest.raises(SGridDatasetInconsistency, match=f"face dimension {face_dim!r}"):
+        FieldSet.from_sgrid_conventions(ds, mesh="flat")
+
+
 def test_fieldset_skip_field_data_validation():
     ds = datasets_structured["ds_2d_left"]
     ds["U_A_grid"][:] = np.nan
@@ -522,3 +534,23 @@ time interval: (np.datetime64('2000-01-02T12:00:00.000000000'), np.datetime64('2
     assert actual == expected
 
     # TODO: Add test for the ChunkedArray backend (can also refactor this test at the same time)
+
+
+@pytest.mark.filterwarnings("ignore:Time-varying \\(4D\\) z coordinates are experimental")
+@pytest.mark.parametrize(
+    "n_snapshots",
+    [
+        pytest.param(1, id="single_snapshot_4d_z"),
+        pytest.param(3, id="time_varying_4d_z"),
+    ],
+)
+def test_fieldset_from_simple_UV_sigma_dataset(n_snapshots):
+    nz, ny, nx = 4, 6, 5
+    eta = np.broadcast_to(np.linspace(-1.0, 1.0, n_snapshots)[:, np.newaxis, np.newaxis], (n_snapshots, ny, nx))
+    ds = simple_UV_sigma_dataset(n_snapshots, nz, ny, nx, np.full((ny, nx), 50.0), eta)
+    fieldset = FieldSet.from_sgrid_conventions(ds, mesh="flat")
+
+    depth = fieldset.U.grid._ds["depth"]
+    assert depth.dims == ("time", "depth", "YC", "XC")
+    assert depth.sizes["time"] == n_snapshots
+    assert fieldset.U.grid.get_axis_dim("Z") == nz
