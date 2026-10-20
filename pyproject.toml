@@ -105,8 +105,6 @@ ignore = [
   "RUF005",
   # Prefer `next(iter(variable.items()))` over single element slice
   "RUF015",
-  # Use `X | Y` in `isinstance` (see https://github.com/home-assistant/core/issues/123850)
-  "UP038",
   # Pattern passed to `match=` contains metacharacters but is neither escaped nor raw
   "RUF043",
 
@@ -124,7 +122,7 @@ ignore = [
   "D104",
   # Missing docstring in magic method
   "D105",
-  # Missing docstring in __init__
+  # First line should end with a period
   "D400",
   # First line should be in imperative mood (requires writing of summaries)
   "D401",
@@ -135,15 +133,8 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-# Ignore docstring rules everywhere except for the stable files (particleset.py, interpolators.py).
-"!src/parcels/{_core/basegrid,_core/field,_core/fieldset,_core/kernel,_core/particle,_core/particlefile,_core/particleset,_core/uxgrid,_core/xgrid,kernels/advection,kernels/advectiondiffusion,interpolators}.py" = [
-  # Missing docstring in public class
-  "D101",
-  # Missing docstring in public method
-  "D102",
-  # Missing docstring in public function
-  "D103",
-]
+# No docstring linting outside the package source
+"{tests,docs,tools}/**" = ["D"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
@@ -158,12 +149,11 @@ show_error_context = true
 warn_redundant_casts = true
 warn_unused_configs = true
 warn_unused_ignores = true
+strict_equality = true
+enable_error_code = ["ignore-without-code", "truthy-bool"]
 
 exclude = [
   # Temporarily exclude files. As we improve typechecking across the codebase, remove these
-  "src/parcels/_core/utils/time.py",
-  "src/parcels/_core/utils/interpolation.py",
-  "src/parcels/_core/utils/unstructured.py",
   "src/parcels/_core/particle.py",
   "src/parcels/_core/kernel.py",
   "src/parcels/_core/particleset.py",
@@ -171,12 +161,10 @@ exclude = [
   "src/parcels/_core/particlefile.py",
   "src/parcels/_core/uxgrid.py",
   "src/parcels/_core/spatialhash.py",
-  "src/parcels/_core/particlesetview.py",
   "src/parcels/_core/fieldset.py",
   "src/parcels/_core/index_search.py",
   "src/parcels/interpolators/_xinterpolators.py",
   "src/parcels/interpolators/_uxinterpolators.py",
-  "src/parcels/kernels/_sigmagrids.py",
   "src/parcels/kernels/_advectiondiffusion.py",
   "src/parcels/kernels/_advection.py",
 ]
