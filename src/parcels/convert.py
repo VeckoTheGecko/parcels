@@ -871,7 +871,7 @@ def fesom_to_ugrid(ds: ux.UxDataset) -> ux.UxDataset:
     >>> from parcels.convert import fesom_to_ugrid
     >>> ds = ux.open_mfdataset(grid_path, data_path)
     >>> ds_ugrid = fesom_to_ugrid(ds)
-    >>> fieldset = FieldSet.from_ugrid_conventions(ds_ugrid, mesh="flat")
+    >>> fieldset = FieldSet.from_ugrid_conventions(ds_ugrid)
     """
     ds = ds.copy()
 
@@ -907,7 +907,7 @@ def icon_to_ugrid(ds: ux.UxDataset) -> ux.UxDataset:
     >>> from parcels.convert import icon_to_ugrid
     >>> ds = ux.open_mfdataset(grid_path, data_path)
     >>> ds_ugrid = icon_to_ugrid(ds)
-    >>> fieldset = FieldSet.from_ugrid_conventions(ds_ugrid, mesh="flat")
+    >>> fieldset = FieldSet.from_ugrid_conventions(ds_ugrid)
     """
     ds = ds.copy()
     interface_dim, center_dim = _detect_vertical_coordinates(ds, _ICON_VERTICAL_DIMS)
